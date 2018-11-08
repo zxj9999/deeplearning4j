@@ -783,9 +783,84 @@ void ConvolutionUtils<T>::getSizesAndIndexesConv3d(const bool isNCDHW, const NDA
 
 }
  
+#ifdef HAVE_MKLDNN
+using namespace mkldnn;
+
+template <typename T>
+void ConvolutionUtils<T>::getMKLDNNMemoryDescConv2d(int kH, int kW, int sH, int sW, int pH, int pW, int dH, int dW, bool isSameMode, bool isNCHW,
+        int bS, int iC, int iH, int iW, int oC, int oH, int oW, const NDArray<T>* src, const NDArray<T>* diff_src,
+        const NDArray<T>* weights, const NDArray<T>* diff_weights, const NDArray<T>* bias, const NDArray<T>* dst,
+        mkldnn::memory::desc* conv_src_md, mkldnn::memory::desc* conv_diff_src_md, mkldnn::memory::desc* conv_weights_md,
+        mkldnn::memory::desc* conv_diff_weights_md, mkldnn::memory::desc* conv_bias_md, mkldnn::memory::desc* conv_dst_md,
+        mkldnn::memory::dims& conv_strides, mkldnn::memory::dims& conv_padding, mkldnn::memory::dims& conv_padding_r) {
+    mkldnn::memory::dims conv_src_tz = { bS, iC, iH, iW };
+    mkldnn::memory::dims conv_weights_tz = { oC, iC, kH, kW };
+    mkldnn::memory::dims conv_bias_tz = { oC };
+    mkldnn::memory::dims conv_dst_tz = { bS, oC, oH, oW };
+
+    conv_strides = { sH, sW };
+    conv_padding = { pH, pW };
+    conv_padding_r = { (oH - 1) * sH - iH + kH - pH,
+                       (oW - 1) * sW - iW + kW - pW };
+
+    auto type = mkldnn::memory::data_type::f32;
+    auto format = isNCHW ? mkldnn::memory::format::nchw : mkldnn::memory::format::nhwc;
+    auto formatw = mkldnn::memory::format::hwio;
+
+    if (src != nullptr && conv_src_md != nullptr) {
+        *conv_src_md = mkldnn::memory::desc({ conv_src_tz }, type, format);
+        conv_src_md->data.format = mkldnn_blocked; // overrides "format = isNCHW ? nchw : nhwc"
+        conv_src_md->data.layout_desc.blocking.strides[0][0] = src->stridesOf()[isNCHW ? 0 : 0];
+        conv_src_md->data.layout_desc.blocking.strides[0][1] = src->stridesOf()[isNCHW ? 1 : 3];
+        conv_src_md->data.layout_desc.blocking.strides[0][2] = src->stridesOf()[isNCHW ? 2 : 1];
+        conv_src_md->data.layout_desc.blocking.strides[0][3] = src->stridesOf()[isNCHW ? 3 : 2];
+    }
+
+    if (diff_src != nullptr && conv_diff_src_md != nullptr) {
+        *conv_diff_src_md = mkldnn::memory::desc({ conv_src_tz }, type, format);
+        conv_diff_src_md->data.format = mkldnn_blocked; // overrides "format = isNCHW ? nchw : nhwc"
+        conv_diff_src_md->data.layout_desc.blocking.strides[0][0] = diff_src->stridesOf()[isNCHW ? 0 : 0];
+        conv_diff_src_md->data.layout_desc.blocking.strides[0][1] = diff_src->stridesOf()[isNCHW ? 1 : 3];
+        conv_diff_src_md->data.layout_desc.blocking.strides[0][2] = diff_src->stridesOf()[isNCHW ? 2 : 1];
+        conv_diff_src_md->data.layout_desc.blocking.strides[0][3] = diff_src->stridesOf()[isNCHW ? 3 : 2];
+    }
+
+    if (weights != nullptr && conv_weights_md != nullptr) {
+        *conv_weights_md = mkldnn::memory::desc({ conv_weights_tz }, type, formatw);
+        conv_weights_md->data.format = mkldnn_blocked; // overrides "formatw = hwio"
+        conv_weights_md->data.layout_desc.blocking.strides[0][0] = weights->stridesOf()[3];
+        conv_weights_md->data.layout_desc.blocking.strides[0][1] = weights->stridesOf()[2];
+        conv_weights_md->data.layout_desc.blocking.strides[0][2] = weights->stridesOf()[0];
+        conv_weights_md->data.layout_desc.blocking.strides[0][3] = weights->stridesOf()[1];
+    }
+
+    if (diff_weights != nullptr && conv_diff_weights_md != nullptr) {
+        *conv_diff_weights_md = mkldnn::memory::desc({ conv_weights_tz }, type, formatw);
+        conv_diff_weights_md->data.format = mkldnn_blocked; // overrides "formatw = hwio"
+        conv_diff_weights_md->data.layout_desc.blocking.strides[0][0] = diff_weights->stridesOf()[3];
+        conv_diff_weights_md->data.layout_desc.blocking.strides[0][1] = diff_weights->stridesOf()[2];
+        conv_diff_weights_md->data.layout_desc.blocking.strides[0][2] = diff_weights->stridesOf()[0];
+        conv_diff_weights_md->data.layout_desc.blocking.strides[0][3] = diff_weights->stridesOf()[1];
+    }
+
+    if (bias != nullptr && conv_bias_md != nullptr) {
+        *conv_bias_md = mkldnn::memory::desc({ conv_bias_tz }, type, mkldnn::memory::format::x);
+    }
+
+    if (dst != nullptr && conv_dst_md != nullptr) {
+        *conv_dst_md = mkldnn::memory::desc({ conv_dst_tz }, type, format);
+        conv_dst_md->data.format = mkldnn_blocked; // overrides "format = isNCHW ? nchw : nhwc"
+        conv_dst_md->data.layout_desc.blocking.strides[0][0] = dst->stridesOf()[isNCHW ? 0 : 0];
+        conv_dst_md->data.layout_desc.blocking.strides[0][1] = dst->stridesOf()[isNCHW ? 1 : 3];
+        conv_dst_md->data.layout_desc.blocking.strides[0][2] = dst->stridesOf()[isNCHW ? 2 : 1];
+        conv_dst_md->data.layout_desc.blocking.strides[0][3] = dst->stridesOf()[isNCHW ? 3 : 2];
+    }
+}
+#endif
+
 //////////////////////////////////////////////////////////////////////////
 template <typename T>
-void ConvolutionUtils<T>::conv2d(const std::vector<NDArray<T>*>& inArrs, NDArray<T>* output, const std::vector<int>& intArgs) {
+void ConvolutionUtils<T>::conv2d(nd4j::graph::Context<T>& block, const std::vector<NDArray<T>*>& inArrs, NDArray<T>* output, const std::vector<int>& intArgs) {
 
     NDArray<T> *input   = inArrs[0];                                    // [bS, iH, iW, iC] (NHWC) or [bS, iC, iH, iW] (NCHW)
     NDArray<T> *weights = inArrs[1];                                    // [kH, kW, iC, oC] always
@@ -807,17 +882,62 @@ void ConvolutionUtils<T>::conv2d(const std::vector<NDArray<T>*>& inArrs, NDArray
     int bS, iC, iH, iW, oC, oH, oW;                             // batch size, input channels, input height/width, output channels, output height/width;
     int indIOioC, indIiH, indWoC, indWiC, indWkH, indOoH;       // corresponding indexes
     ConvolutionUtils<T>::getSizesAndIndexesConv2d(isNCHW, *input, *output, bS, iC, iH, iW, oC, oH, oW, indIOioC, indIiH, indWiC, indWoC, indWkH, indOoH);
-    
+
+    if(isSameMode)                       // SAME
+        ConvolutionUtils<T>::calcPadding2D(pH, pW, oH, oW, iH, iW, kH, kW, sH, sW, dH, dW);
+
+#ifdef HAVE_MKLDNN
+    if (block.isUseMKLDNN() && nd4j::MKLDNNStream<T>::isSupported()) {
+        std::vector<nd4j::MKLDNNStream<T> >& streams = block.getMKLDNNStreams();
+        if (streams.empty()) {
+            streams.push_back(MKLDNNStream<T>("conv2d"));
+        }
+
+        if (streams[0].checkAndReset(inArrs, {output}, {}, intArgs)) {
+            mkldnn_memory_desc_t empty;
+            mkldnn::memory::desc conv_src_md(empty), conv_weights_md(empty), conv_bias_md(empty), conv_dst_md(empty);
+            mkldnn::memory::dims conv_strides, conv_padding, conv_padding_r;
+
+            getMKLDNNMemoryDescConv2d(kH, kW, sH, sW, pH, pW, dH, dW, isSameMode, isNCHW,
+                    bS, iC, iH, iW, oC, oH, oW, input, nullptr, weights, nullptr, bias, output,
+                    &conv_src_md, nullptr, &conv_weights_md, nullptr, &conv_bias_md, &conv_dst_md,
+                    conv_strides, conv_padding, conv_padding_r);
+
+            auto conv_desc = bias != nullptr
+                    ? convolution_forward::desc(prop_kind::forward,
+                            convolution_direct, conv_src_md, conv_weights_md, conv_bias_md,
+                            conv_dst_md, conv_strides, conv_padding, conv_padding_r, padding_kind::zero)
+                    : convolution_forward::desc(prop_kind::forward,
+                            convolution_direct, conv_src_md, conv_weights_md,
+                            conv_dst_md, conv_strides, conv_padding, conv_padding_r, padding_kind::zero);
+
+            auto conv_prim_desc = convolution_forward::primitive_desc(conv_desc, streams[0].getEngine());
+            auto conv_src_memory = mkldnn::memory(conv_prim_desc.src_primitive_desc(), input->buffer());
+            auto conv_weights_memory = mkldnn::memory(conv_prim_desc.weights_primitive_desc(), weights->buffer());
+            auto conv_dst_memory = mkldnn::memory(conv_prim_desc.dst_primitive_desc(), output->buffer());
+            if (bias != nullptr) {
+                auto conv_bias_memory = mkldnn::memory(conv_prim_desc.bias_primitive_desc(), bias->buffer());
+                streams[0].setMemory({conv_src_memory, conv_weights_memory, conv_bias_memory, conv_dst_memory});
+                streams[0].setOperation(convolution_forward(conv_prim_desc, conv_src_memory, conv_weights_memory, conv_bias_memory, conv_dst_memory));
+            } else {
+                streams[0].setMemory({conv_src_memory, conv_weights_memory, conv_dst_memory});
+                streams[0].setOperation(convolution_forward(conv_prim_desc, conv_src_memory, conv_weights_memory, conv_dst_memory));
+            }
+        }
+
+        streams[0].submitAndWait();
+        return;
+    }
+#endif
+    nd4j_debug("MKL-DNN is not used for conv2d!\n", 0);
+
     std::vector<int> weightsAxesForDot = {indWiC, indWkH, indWkH+1};                                                        // iC, kH, kW
-    
+
     std::vector<int> permutForOutput;
     if(!isNCHW)
         input = input->permute({0, 3, 1, 2});                                       // [bS, iH, iW, iC] -> [bS, iC, iH, iW] if NHWC
     else
         permutForOutput = {0, indOoH, indOoH+1, indIOioC};                          // [bS, oC, oH, oW] -> [bS, oH, oW, oC]
-     
-    if(isSameMode)                       // SAME        
-        ConvolutionUtils<T>::calcPadding2D(pH, pW, oH, oW, iH, iW, kH, kW, sH, sW, dH, dW);
 
     NDArray<T> columns(input->ordering(), {bS, iC, kH, kW, oH, oW}, input->getWorkspace());        
 
@@ -834,101 +954,9 @@ void ConvolutionUtils<T>::conv2d(const std::vector<NDArray<T>*>& inArrs, NDArray
         delete input;                
 }
 
-#ifdef HAVE_MKLDNN
-using namespace mkldnn;
-
-template <typename T>
-void ConvolutionUtils<T>::mkldnn_conv2d(MKLDNNStream<T> &stream, const std::vector<NDArray<T>*>& inArrs, NDArray<T>* output, const std::vector<int>& intArgs) {
-
-    NDArray<T> *input   = inArrs[0];                                    // [bS, iH, iW, iC] (NHWC) or [bS, iC, iH, iW] (NCHW)
-    NDArray<T> *weights = inArrs[1];                                    // [kH, kW, iC, oC] always
-    NDArray<T> *bias    = inArrs[2];                                    // [oC]
-
-    // output [bS, oH, oW, oC] (NHWC) or [bS, oC, oH, oW] (NCHW)
-
-    int kH = intArgs[0];                                                        // filter(kernel) height
-    int kW = intArgs[1];                                                        // filter(kernel) width
-    int sH = intArgs[2];                                                        // strides height
-    int sW = intArgs[3];                                                        // strides width
-    int pH = intArgs[4];                                                        // paddings height
-    int pW = intArgs[5];                                                        // paddings width
-    int dH = intArgs[6];                                                        // dilations height
-    int dW = intArgs[7];                                                        // dilations width
-    int isSameMode = intArgs[8];                                                // 0-VALID, 1-SAME
-    int isNCHW     = intArgs[9];                                                
-
-    int bS, iC, iH, iW, oC, oH, oW;                             // batch size, input channels, input height/width, output channels, output height/width;
-    int indIOioC, indIiH, indWoC, indWiC, indWkH, indOoH;       // corresponding indexes
-    ConvolutionUtils<T>::getSizesAndIndexesConv2d(isNCHW, *input, *output, bS, iC, iH, iW, oC, oH, oW, indIOioC, indIiH, indWiC, indWoC, indWkH, indOoH);
-
-    if(isSameMode)                       // SAME
-        ConvolutionUtils<T>::calcPadding2D(pH, pW, oH, oW, iH, iW, kH, kW, sH, sW, dH, dW);
-
-    if (stream.checkAndReset(inArrs, {output}, {}, intArgs)) {
-        mkldnn::memory::dims conv_src_tz = { bS, iC, iH, iW };
-        mkldnn::memory::dims conv_weights_tz = { oC, iC, kH, kW };
-        mkldnn::memory::dims conv_bias_tz = { oC };
-        mkldnn::memory::dims conv_dst_tz = { bS, oC, oH, oW };
-        mkldnn::memory::dims conv_strides = { sH, sW };
-        mkldnn::memory::dims conv_padding = { pH, pW };
-        mkldnn::memory::dims conv_padding_r = { (oH - 1) * sH - iH + kH - pH,
-                                                (oW - 1) * sW - iW + kW - pW };
-
-        auto type = mkldnn::memory::data_type::f32;
-        auto format = isNCHW ? mkldnn::memory::format::nchw : mkldnn::memory::format::nhwc;
-        auto formatw = mkldnn::memory::format::hwio;
-        auto conv_src_md = mkldnn::memory::desc({ conv_src_tz }, type, format);
-        auto conv_weights_md = mkldnn::memory::desc({ conv_weights_tz }, type, formatw);
-        auto conv_bias_md = mkldnn::memory::desc({ conv_bias_tz }, type, mkldnn::memory::format::x);
-        auto conv_dst_md = mkldnn::memory::desc({ conv_dst_tz }, type, format);
-
-        conv_src_md.data.format = mkldnn_blocked; // overrides "format = isNCHW ? nchw : nhwc"
-        conv_src_md.data.layout_desc.blocking.strides[0][0] = input->stridesOf()[isNCHW ? 0 : 0];
-        conv_src_md.data.layout_desc.blocking.strides[0][1] = input->stridesOf()[isNCHW ? 1 : 3];
-        conv_src_md.data.layout_desc.blocking.strides[0][2] = input->stridesOf()[isNCHW ? 2 : 1];
-        conv_src_md.data.layout_desc.blocking.strides[0][3] = input->stridesOf()[isNCHW ? 3 : 2];
-
-        conv_weights_md.data.format = mkldnn_blocked; // overrides "formatw = hwio"
-        conv_weights_md.data.layout_desc.blocking.strides[0][0] = weights->stridesOf()[3];
-        conv_weights_md.data.layout_desc.blocking.strides[0][1] = weights->stridesOf()[2];
-        conv_weights_md.data.layout_desc.blocking.strides[0][2] = weights->stridesOf()[0];
-        conv_weights_md.data.layout_desc.blocking.strides[0][3] = weights->stridesOf()[1];
-
-        conv_dst_md.data.format = mkldnn_blocked; // overrides "format = isNCHW ? nchw : nhwc"
-        conv_dst_md.data.layout_desc.blocking.strides[0][0] = output->stridesOf()[isNCHW ? 0 : 0];
-        conv_dst_md.data.layout_desc.blocking.strides[0][1] = output->stridesOf()[isNCHW ? 1 : 3];
-        conv_dst_md.data.layout_desc.blocking.strides[0][2] = output->stridesOf()[isNCHW ? 2 : 1];
-        conv_dst_md.data.layout_desc.blocking.strides[0][3] = output->stridesOf()[isNCHW ? 3 : 2];
-
-        auto conv_desc = bias != nullptr
-                ? convolution_forward::desc(prop_kind::forward,
-                        convolution_direct, conv_src_md, conv_weights_md, conv_bias_md,
-                        conv_dst_md, conv_strides, conv_padding, conv_padding_r, padding_kind::zero)
-                : convolution_forward::desc(prop_kind::forward,
-                        convolution_direct, conv_src_md, conv_weights_md,
-                        conv_dst_md, conv_strides, conv_padding, conv_padding_r, padding_kind::zero);
-
-        auto conv_prim_desc = convolution_forward::primitive_desc(conv_desc, stream.getEngine());
-        auto conv_src_memory = mkldnn::memory(conv_prim_desc.src_primitive_desc(), input->buffer());
-        auto conv_weights_memory = mkldnn::memory(conv_prim_desc.weights_primitive_desc(), weights->buffer());
-        auto conv_dst_memory = mkldnn::memory(conv_prim_desc.dst_primitive_desc(), output->buffer());
-        if (bias != nullptr) {
-            auto conv_bias_memory = mkldnn::memory(conv_prim_desc.bias_primitive_desc(), bias->buffer());
-            stream.setMemory({conv_src_memory, conv_weights_memory, conv_bias_memory, conv_dst_memory});
-            stream.setOperation(convolution_forward(conv_prim_desc, conv_src_memory, conv_weights_memory, conv_bias_memory, conv_dst_memory));
-        } else {
-            stream.setMemory({conv_src_memory, conv_weights_memory, conv_dst_memory});
-            stream.setOperation(convolution_forward(conv_prim_desc, conv_src_memory, conv_weights_memory, conv_dst_memory));
-        }
-    }
-
-    stream.submitAndWait();
-}
-#endif
-
 //////////////////////////////////////////////////////////////////////////
 template <typename T>
-void ConvolutionUtils<T>::conv2dBP(const std::vector<NDArray<T>*>& inArrs, const std::vector<NDArray<T>*>& outArrs, const std::vector<int>& intArgs) {
+void ConvolutionUtils<T>::conv2dBP(nd4j::graph::Context<T>& block, const std::vector<NDArray<T>*>& inArrs, const std::vector<NDArray<T>*>& outArrs, const std::vector<int>& intArgs) {
 
     NDArray<T> *input   = inArrs[0];                        // [bS, iH, iW, iC] (NHWC) or [bS, iC, iH, iW] (NCHW)
     NDArray<T> *weights = inArrs[1];                        // [kH, kW, iC, oC] always
@@ -954,20 +982,99 @@ void ConvolutionUtils<T>::conv2dBP(const std::vector<NDArray<T>*>& inArrs, const
     int indIOioC, indIiH, indWoC, indWiC, indWkH, indOoH;       // corresponding indexes
     getSizesAndIndexesConv2d(isNCHW, *input, *gradO, bS, iC, iH, iW, oC, oH, oW, indIOioC, indIiH, indWiC, indWoC, indWkH, indOoH);
 
-    std::vector<int> gradOaxesForDot; 
+    if(isSameMode)                       // SAME
+        calcPadding2D(pH, pW, oH, oW, iH, iW, kH, kW, sH, sW, dH, dW);
+
+#ifdef HAVE_MKLDNN
+    if (block.isUseMKLDNN() && nd4j::MKLDNNStream<T>::isSupported()) {
+        std::vector<nd4j::MKLDNNStream<T> >& streams = block.getMKLDNNStreams();
+        if (streams.empty()) {
+            streams.push_back(MKLDNNStream<T>("conv2d_bp_weights"));
+            streams.push_back(MKLDNNStream<T>("conv2d_bp_data"));
+        }
+
+        bool resetW = streams[0].checkAndReset(inArrs, outArrs, {}, intArgs);
+        bool resetI = streams[1].checkAndReset(inArrs, outArrs, {}, intArgs);
+        if (resetW || resetI) {
+            mkldnn_memory_desc_t empty;
+            mkldnn::memory::desc conv_src_md(empty), conv_diff_src_md(empty), conv_weights_md(empty),
+                                 conv_diff_weights_md(empty), conv_bias_md(empty), conv_dst_md(empty);
+            mkldnn::memory::dims conv_strides, conv_padding, conv_padding_r;
+
+            getMKLDNNMemoryDescConv2d(kH, kW, sH, sW, pH, pW, dH, dW, isSameMode, isNCHW,
+                    bS, iC, iH, iW, oC, oH, oW, input, gradI, weights, gradW, gradB, gradO,
+                    &conv_src_md, &conv_diff_src_md, &conv_weights_md, &conv_diff_weights_md, &conv_bias_md, &conv_dst_md,
+                    conv_strides, conv_padding, conv_padding_r);
+
+            auto conv_desc = gradB != nullptr
+                    ? convolution_forward::desc(prop_kind::forward,
+                            convolution_direct, conv_src_md, conv_weights_md, conv_bias_md,
+                            conv_dst_md, conv_strides, conv_padding, conv_padding_r, padding_kind::zero)
+                    : convolution_forward::desc(prop_kind::forward,
+                            convolution_direct, conv_src_md, conv_weights_md,
+                            conv_dst_md, conv_strides, conv_padding, conv_padding_r, padding_kind::zero);
+
+            auto conv_prim_desc = convolution_forward::primitive_desc(conv_desc, streams[0].getEngine());
+
+            if (gradW != nullptr) {
+                auto convW_desc = gradB != nullptr
+                        ? convolution_backward_weights::desc(
+                                convolution_direct, conv_src_md, conv_diff_weights_md, conv_bias_md,
+                                conv_dst_md, conv_strides, conv_padding, conv_padding_r, padding_kind::zero)
+                        : convolution_backward_weights::desc(
+                                convolution_direct, conv_src_md, conv_diff_weights_md,
+                                conv_dst_md, conv_strides, conv_padding, conv_padding_r, padding_kind::zero);
+
+                auto convW_prim_desc = convolution_backward_weights::primitive_desc(convW_desc, streams[0].getEngine(), conv_prim_desc);
+                auto convW_src_memory = mkldnn::memory(convW_prim_desc.src_primitive_desc(), input->buffer());
+                auto convW_weights_memory = mkldnn::memory(convW_prim_desc.diff_weights_primitive_desc(), gradW->buffer());
+                auto convW_dst_memory = mkldnn::memory(convW_prim_desc.diff_dst_primitive_desc(), gradO->buffer());
+                if (gradB != nullptr) {
+                    auto convW_bias_memory = mkldnn::memory(convW_prim_desc.diff_bias_primitive_desc(), gradB->buffer());
+                    streams[0].setMemory({convW_src_memory, convW_dst_memory, convW_weights_memory, convW_bias_memory});
+                    streams[0].setOperation(convolution_backward_weights(convW_prim_desc, convW_src_memory, convW_dst_memory, convW_weights_memory, convW_bias_memory));
+                } else {
+                    streams[0].setMemory({convW_src_memory, convW_dst_memory, convW_weights_memory});
+                    streams[0].setOperation(convolution_backward_weights(convW_prim_desc, convW_src_memory, convW_dst_memory, convW_weights_memory));
+                }
+            }
+
+            if (gradI != nullptr) {
+                auto convI_desc =
+                        convolution_backward_data::desc(
+                                convolution_direct, conv_diff_src_md, conv_weights_md,
+                                conv_dst_md, conv_strides, conv_padding, conv_padding_r, padding_kind::zero);
+
+                auto convI_prim_desc = convolution_backward_data::primitive_desc(convI_desc, streams[1].getEngine(), conv_prim_desc);
+                auto convI_src_memory = mkldnn::memory(convI_prim_desc.diff_src_primitive_desc(), gradI->buffer());
+                auto convI_weights_memory = mkldnn::memory(convI_prim_desc.weights_primitive_desc(), weights->buffer());
+                auto convI_dst_memory = mkldnn::memory(convI_prim_desc.diff_dst_primitive_desc(), gradO->buffer());
+                streams[1].setMemory({convI_dst_memory, convI_weights_memory, convI_src_memory});
+                streams[1].setOperation(convolution_backward_data(convI_prim_desc, convI_dst_memory, convI_weights_memory, convI_src_memory));
+            }
+        }
+
+        if (gradW != nullptr) {
+            streams[0].submitAndWait();
+        }
+        if (gradI != nullptr) {
+            streams[1].submitAndWait();
+        }
+        return;
+    }
+#endif
+    nd4j_debug("MKL-DNN is not used for conv2d_bp!\n", 0);
+
+    std::vector<int> gradOaxesForDot;
 
     if(!isNCHW) {
-        input = input->permute({0, 3, 1, 2});                                   // [bS, iH, iW, iC] -> [bS, iC, iH, iW]                        
-        gradI = gradI->permute({0, 3, 1, 2});                                   // [bS, iH, iW, iC] -> [bS, iC, iH, iW]                        
-        gradOaxesForDot  = {0, 1, 2};                                           // bS, oH, oW        
+        input = input->permute({0, 3, 1, 2});                                   // [bS, iH, iW, iC] -> [bS, iC, iH, iW]
+        gradI = gradI->permute({0, 3, 1, 2});                                   // [bS, iH, iW, iC] -> [bS, iC, iH, iW]
+        gradOaxesForDot  = {0, 1, 2};                                           // bS, oH, oW
     }
     else
         gradOaxesForDot  = {0, 2, 3};                                           // bS, oH, oW
-    
-    if(isSameMode)                       // SAME        
-        calcPadding2D(pH, pW, oH, oW, iH, iW, kH, kW, sH, sW, dH, dW);
 
-    
     NDArray<T> columns(input->ordering(), {bS, iC, kH, kW, oH, oW}, input->getWorkspace());
     
     // ----- calculation of gradW ----- // 
@@ -1138,7 +1245,7 @@ void ConvolutionUtils<T>::depthwiseConv2dBP(const std::vector<NDArray<T>*>& inAr
 
 //////////////////////////////////////////////////////////////////////////
 template <typename T>
-void ConvolutionUtils<T>::sconv2d(const std::vector<NDArray<T>*>& inArrs, NDArray<T>* output, const std::vector<int>& intArgs) {
+void ConvolutionUtils<T>::sconv2d(nd4j::graph::Context<T>& block, const std::vector<NDArray<T>*>& inArrs, NDArray<T>* output, const std::vector<int>& intArgs) {
 
     NDArray<T> *input        = inArrs[0];                                           // [bS, iH, iW, iC]  (NHWC) or [bS, iC, iH, iW]  (NCHW)
     NDArray<T> *weightsDepth = inArrs[1];                                           // [kH, kW, iC, mC]  always
@@ -1172,7 +1279,7 @@ void ConvolutionUtils<T>::sconv2d(const std::vector<NDArray<T>*>& inArrs, NDArra
     
     // ----- perform pointwise convolution (oH = iH, oW = iW) ----- //
     if (weightsPoint) {
-        ConvolutionUtils<T>::conv2d({outputDepth, weightsPoint, bias}, output, {1,1, 1,1, 0,0, 1,1, isSameMode, isNCHW});             // in this case oH=iH, oW=iW                
+        ConvolutionUtils<T>::conv2d(block, {outputDepth, weightsPoint, bias}, output, {1,1, 1,1, 0,0, 1,1, isSameMode, isNCHW});             // in this case oH=iH, oW=iW                
         delete outputDepth;
     }
 }

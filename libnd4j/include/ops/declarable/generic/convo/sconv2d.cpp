@@ -84,11 +84,11 @@ CUSTOM_OP_IMPL(sconv2d, 2, 1, false, 0, 9) {
 
     if (iC == 1) {
         nd4j_debug("SCONV2D OP: for input_channels = 1 this op is equivalent to standard conv2d\n","");
-        ConvolutionUtils<T>::conv2d({input, weightsDepth, bias}, output, {kH,kW, sH,sW, pH,pW, dH,dW, isSameMode, isNCHW});
+        ConvolutionUtils<T>::conv2d(block, {input, weightsDepth, bias}, output, {kH,kW, sH,sW, pH,pW, dH,dW, isSameMode, isNCHW});
         return Status::OK();
     }
 
-    ConvolutionUtils<T>::sconv2d({input, weightsDepth, weightsPoint, bias}, output, {kH,kW, sH,sW, pH,pW, dH,dW, isSameMode, isNCHW});
+    ConvolutionUtils<T>::sconv2d(block, {input, weightsDepth, weightsPoint, bias}, output, {kH,kW, sH,sW, pH,pW, dH,dW, isSameMode, isNCHW});
 
     return Status::OK();
 }
@@ -263,12 +263,12 @@ CUSTOM_OP_IMPL(sconv2d_bp, 3, 2, false, 0, 9) {
 
         auto resultFFShape = isNCHW ? std::vector<Nd4jLong>({bS, mC*iC, oH, oW}) : std::vector<Nd4jLong>({bS, oH, oW, mC*iC});
         NDArray<T>* resultFF = new NDArray<T>(input->ordering(), resultFFShape, block.getWorkspace());
-        ConvolutionUtils<T>::sconv2d({input, weightsDepth, nullptr, nullptr}, resultFF, {kH,kW, sH,sW, pH,pW, dH,dW, isSameMode, isNCHW});
+        ConvolutionUtils<T>::sconv2d(block, {input, weightsDepth, nullptr, nullptr}, resultFF, {kH,kW, sH,sW, pH,pW, dH,dW, isSameMode, isNCHW});
 
         auto gradIDepthShape = ShapeUtils<T>::composeShapeUsingDimsAndIdx({bS,iC*mC,oH,oW,  0,indIOioC,indIiH,indIiH+1});
         NDArray<T>* gradIDepth = new NDArray<T>(resultFF->ordering(), gradIDepthShape, block.getWorkspace());                 // [bS, oH, oW, iC*mC]  (NHWC) or [bS, iC*mC, oH, oW] (NCHW)
 
-        ConvolutionUtils<T>::conv2dBP({resultFF, weightsPoint, bias, gradO}, {gradIDepth, gradWP, gradB}, {1,1, 1,1, 0,0, 1,1, isSameMode, isNCHW});    // in this case oH=iH and oW=iW
+        ConvolutionUtils<T>::conv2dBP(block, {resultFF, weightsPoint, bias, gradO}, {gradIDepth, gradWP, gradB}, {1,1, 1,1, 0,0, 1,1, isSameMode, isNCHW});    // in this case oH=iH and oW=iW
 
         gradO = gradIDepth;
         bias = gradB = nullptr;                     // if pointwise backprop was done then don't calculate gradB at depthwise_conv2d_bp step

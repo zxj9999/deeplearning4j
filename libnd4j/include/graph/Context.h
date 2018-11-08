@@ -58,7 +58,7 @@ namespace nd4j {
             int _branch = 0;
 
 #ifdef HAVE_MKLDNN
-            MKLDNNStream<T>* _mkldnnStream = nullptr;
+            std::vector<nd4j::MKLDNNStream<T> > _mkldnnStreams;
 #endif
         public:
             // TODO: maybe override new here as well?
@@ -114,8 +114,7 @@ namespace nd4j {
             void setBranch(int branch);
 
 #ifdef HAVE_MKLDNN
-            MKLDNNStream<T> *getMKLDNNStream() { return _mkldnnStream; }
-            void setMKLDNNStream(MKLDNNStream<T> *mkldnnStream) { _mkldnnStream = mkldnnStream; }
+            std::vector<nd4j::MKLDNNStream<T> >& getMKLDNNStreams() { return _mkldnnStreams; }
 #endif
             /**
              *

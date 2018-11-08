@@ -362,34 +362,34 @@ TEST_F(ConvolutionTests, deconv2D_FF_NoBias_1) {
     delete block;
 }
 
-TEST_F(ConvolutionTests, conv2D_BP_Bias_1) {
-    double _expWGradB[] = {9312.0, 12580.0, 9528.0, 13168.0, 17712.0, 13360.0, 9960.0, 13348.0, 10032.0, 13344.0, 18148.0, 13848.0, 19312.0, 26160.0, 19888.0, 15144.0, 20452.0, 15504.0};
+TYPED_TEST(TypedConvolutionTests, conv2D_BP_Bias_1) {
+    TypeParam _expWGradB[] = {9312.0, 12580.0, 9528.0, 13168.0, 17712.0, 13360.0, 9960.0, 13348.0, 10032.0, 13344.0, 18148.0, 13848.0, 19312.0, 26160.0, 19888.0, 15144.0, 20452.0, 15504.0};
     Nd4jLong _expWGradS[] = {4, 2, 1, 3, 3, 9, 9, 3, 1, 0, 1, 99};
-    NDArray<double> expWGrad(_expWGradB, _expWGradS);
+    NDArray<TypeParam> expWGrad(_expWGradB, _expWGradS);
     expWGrad.triggerAllocationFlag(false, false);
     expWGrad.permutei({2,3,1,0});
 
-    double _expBGradB[] = {784.0, 1296.0};
+    TypeParam _expBGradB[] = {784.0, 1296.0};
     Nd4jLong _expBGradS[] = {2, 2, 1, 1, 1, 0, 1, 99};
 
-    NDArray<double> expBGrad(_expBGradB, _expBGradS);
+    NDArray<TypeParam> expBGrad(_expBGradB, _expBGradS);
     expBGrad.triggerAllocationFlag(false, false);
 
-    NDArray<double> input('c', {2, 1, 4, 4});
-    NDArray<double> weights('c', {2, 1, 3, 3});
-    NDArray<double> bias('c', {2, 1});
-    NDArray<double> epsilonNext('c', {2, 2, 4, 4});
+    NDArray<TypeParam> input('c', {2, 1, 4, 4});
+    NDArray<TypeParam> weights('c', {2, 1, 3, 3});
+    NDArray<TypeParam> bias('c', {2, 1});
+    NDArray<TypeParam> epsilonNext('c', {2, 2, 4, 4});
 
 
-    double _expEpsB[] = {952.0, 1540.0, 1636.0, 1180.0, 1791.0, 2886.0, 3057.0, 2193.0, 2223.0, 3570.0, 3741.0, 2673.0, 1900.0, 3028.0, 3160.0, 2240.0, 2872.0, 4612.0, 4708.0, 3356.0, 5247.0, 8358.0, 8529.0, 6033.0, 5679.0, 9042.0, 9213.0, 6513.0, 4588.0, 7252.0, 7384.0, 5184.0};
-    NDArray<double> expEps(_expEpsB, input.getShapeInfo());
+    TypeParam _expEpsB[] = {952.0, 1540.0, 1636.0, 1180.0, 1791.0, 2886.0, 3057.0, 2193.0, 2223.0, 3570.0, 3741.0, 2673.0, 1900.0, 3028.0, 3160.0, 2240.0, 2872.0, 4612.0, 4708.0, 3356.0, 5247.0, 8358.0, 8529.0, 6033.0, 5679.0, 9042.0, 9213.0, 6513.0, 4588.0, 7252.0, 7384.0, 5184.0};
+    NDArray<TypeParam> expEps(_expEpsB, input.getShapeInfo());
 
     input.linspace(1);
     weights.linspace(1);
     epsilonNext.linspace(1);
     weights.permutei({2,3,1,0});
 
-    nd4j::ops::conv2d_bp<double> op;
+    nd4j::ops::conv2d_bp<TypeParam> op;
 
     auto results = op.execute({&input, &weights, &bias, &epsilonNext}, {},  {3, 3, 1, 1, 0, 0, 1, 1, 1});
 
@@ -420,27 +420,27 @@ TEST_F(ConvolutionTests, conv2D_BP_Bias_1) {
 }
 
 
-TEST_F(ConvolutionTests, conv2D_BP_NoBias_1) {
-    double _expWGradB[] = {9312.0, 12580.0, 9528.0, 13168.0, 17712.0, 13360.0, 9960.0, 13348.0, 10032.0, 13344.0, 18148.0, 13848.0, 19312.0, 26160.0, 19888.0, 15144.0, 20452.0, 15504.0};
+TYPED_TEST(TypedConvolutionTests, conv2D_BP_NoBias_1) {
+    TypeParam _expWGradB[] = {9312.0, 12580.0, 9528.0, 13168.0, 17712.0, 13360.0, 9960.0, 13348.0, 10032.0, 13344.0, 18148.0, 13848.0, 19312.0, 26160.0, 19888.0, 15144.0, 20452.0, 15504.0};
     Nd4jLong _expWGradS[] = {4, 2, 1, 3, 3, 9, 9, 3, 1, 0, 1, 99};
-    NDArray<double> expWGrad(_expWGradB, _expWGradS);
+    NDArray<TypeParam> expWGrad(_expWGradB, _expWGradS);
     expWGrad.triggerAllocationFlag(false, false);
     expWGrad.permutei({2,3,1,0});
 
-    NDArray<double> input('c', {2, 1, 4, 4});
-    NDArray<double> weights('c', {2, 1, 3, 3});
-    NDArray<double> epsilonNext('c', {2, 2, 4, 4});
+    NDArray<TypeParam> input('c', {2, 1, 4, 4});
+    NDArray<TypeParam> weights('c', {2, 1, 3, 3});
+    NDArray<TypeParam> epsilonNext('c', {2, 2, 4, 4});
 
 
-    double _expEpsB[] = {952.0, 1540.0, 1636.0, 1180.0, 1791.0, 2886.0, 3057.0, 2193.0, 2223.0, 3570.0, 3741.0, 2673.0, 1900.0, 3028.0, 3160.0, 2240.0, 2872.0, 4612.0, 4708.0, 3356.0, 5247.0, 8358.0, 8529.0, 6033.0, 5679.0, 9042.0, 9213.0, 6513.0, 4588.0, 7252.0, 7384.0, 5184.0};
-    NDArray<double> expEps(_expEpsB, input.getShapeInfo());
+    TypeParam _expEpsB[] = {952.0, 1540.0, 1636.0, 1180.0, 1791.0, 2886.0, 3057.0, 2193.0, 2223.0, 3570.0, 3741.0, 2673.0, 1900.0, 3028.0, 3160.0, 2240.0, 2872.0, 4612.0, 4708.0, 3356.0, 5247.0, 8358.0, 8529.0, 6033.0, 5679.0, 9042.0, 9213.0, 6513.0, 4588.0, 7252.0, 7384.0, 5184.0};
+    NDArray<TypeParam> expEps(_expEpsB, input.getShapeInfo());
 
     input.linspace(1);
     weights.linspace(1);
     epsilonNext.linspace(1);
     weights.permutei({2,3,1,0});
 
-    nd4j::ops::conv2d_bp<double> op;
+    nd4j::ops::conv2d_bp<TypeParam> op;
 
     auto results = op.execute({&input, &weights, &epsilonNext}, {},  {3, 3, 1, 1, 0, 0, 1, 1, 1});
 
@@ -1111,36 +1111,36 @@ TEST_F(ConvolutionTests, Test_Dilation2D_2) {
 }
 
 //////////////////////////////////////////////////////////////////////
-TEST_F(ConvolutionTests, conv2d_bp_test1) {
+TYPED_TEST(TypedConvolutionTests, conv2d_bp_test1) {
 
     int bS=2, iH=4,iW=3,  iC=4,oC=3,  kH=3,kW=2,  sH=1,sW=1,  pH=0,pW=0,  dH=1,dW=1;    
     int       oH=4,oW=3;
     int paddingMode = 1;             // 1-SAME, 0-VALID;
     int dataFormat  = 1;             // 1-NHWC, 0-NCHW    
 
-    NDArray<double> input   ('c', {bS, iH, iW, iC});
-    NDArray<double> weights ('c', {kH, kW, iC, oC});
-    NDArray<double> bias    ('c', {oC}, {1,2,3});
-    NDArray<double> gradO   ('c', {bS, oH, oW, oC});
+    NDArray<TypeParam> input   ('c', {bS, iH, iW, iC});
+    NDArray<TypeParam> weights ('c', {kH, kW, iC, oC});
+    NDArray<TypeParam> bias    ('c', {oC}, {1,2,3});
+    NDArray<TypeParam> gradO   ('c', {bS, oH, oW, oC});
     
-    NDArray<double> expGradI('c', {bS, iH, iW, iC},{ 0.226,  0.343,  0.46 ,  0.577, 1.172,  1.46 ,  1.748,  2.036, 1.892,  2.288,  2.684,  3.08 , 1.284,  1.581,  1.878,  2.175, 4.458,  5.133,  5.808,  6.483, 6.186,  7.023,  7.86 ,  8.697,
+    NDArray<TypeParam> expGradI('c', {bS, iH, iW, iC},{ 0.226,  0.343,  0.46 ,  0.577, 1.172,  1.46 ,  1.748,  2.036, 1.892,  2.288,  2.684,  3.08 , 1.284,  1.581,  1.878,  2.175, 4.458,  5.133,  5.808,  6.483, 6.186,  7.023,  7.86 ,  8.697,
                                                      3.39 ,  3.93 ,  4.47 ,  5.01 , 9.642, 10.803, 11.964, 13.125,11.37 , 12.693, 14.016, 15.339, 5.266,  5.707,  6.148,  6.589,12.98 , 13.916, 14.852, 15.788,14.564, 15.608, 16.652, 17.696,
                                                      3.25 ,  4.015,  4.78 ,  5.545, 9.812, 11.396, 12.98 , 14.564,10.532, 12.224, 13.916, 15.608, 9.708, 10.977, 12.246, 13.515,25.194, 27.813, 30.432, 33.051,26.922, 29.703, 32.484, 35.265,
                                                     11.814, 13.326, 14.838, 16.35 ,30.378, 33.483, 36.588, 39.693,32.106, 35.373, 38.64 , 41.907,13.474, 14.563, 15.652, 16.741,31.988, 34.22 , 36.452, 38.684,33.572, 35.912, 38.252, 40.592});
     
-    NDArray<double> expGradW('c', {kH, kW, iC, oC},{14.4 , 14.76, 15.12,14.4 , 14.76, 15.12,14.4 , 14.76, 15.12,14.4 , 14.76, 15.12, 9.24,  9.48,  9.72, 9.24,  9.48,  9.72, 9.24,  9.48,  9.72, 9.24,  9.48,  9.72,
+    NDArray<TypeParam> expGradW('c', {kH, kW, iC, oC},{14.4 , 14.76, 15.12,14.4 , 14.76, 15.12,14.4 , 14.76, 15.12,14.4 , 14.76, 15.12, 9.24,  9.48,  9.72, 9.24,  9.48,  9.72, 9.24,  9.48,  9.72, 9.24,  9.48,  9.72,
                                                     17.04, 17.52, 18.  ,17.04, 17.52, 18.  ,17.04, 17.52, 18.  ,17.04, 17.52, 18.  ,10.88, 11.2 , 11.52,10.88, 11.2 , 11.52,10.88, 11.2 , 11.52,10.88, 11.2 , 11.52,
                                                     11.16, 11.52, 11.88,11.16, 11.52, 11.88,11.16, 11.52, 11.88,11.16, 11.52, 11.88, 7.08,  7.32,  7.56, 7.08,  7.32,  7.56, 7.08,  7.32,  7.56, 7.08,  7.32,  7.56});
-    // NDArray<double> expGradB('c', {oC},{});
+    // NDArray<TypeParam> expGradB('c', {oC},{});
 
     input = 2.;
     weights.linspace(0.1, 0.1);
     gradO.linspace(0.01, 0.01);
 
-    nd4j::ops::conv2d_bp<double> op;
-    ResultSet<double>* results = op.execute({&input, &weights, &bias, &gradO}, {}, {kH,kW,  sH,sW,  pH,pW,  dH,dW, paddingMode, dataFormat});
-    NDArray<double>* gradI = results->at(0);
-    NDArray<double>* gradW = results->at(1);     
+    nd4j::ops::conv2d_bp<TypeParam> op;
+    ResultSet<TypeParam>* results = op.execute({&input, &weights, &bias, &gradO}, {}, {kH,kW,  sH,sW,  pH,pW,  dH,dW, paddingMode, dataFormat});
+    NDArray<TypeParam>* gradI = results->at(0);
+    NDArray<TypeParam>* gradW = results->at(1);     
 
     ASSERT_EQ(Status::OK(), results->status());    
 
@@ -1154,36 +1154,36 @@ TEST_F(ConvolutionTests, conv2d_bp_test1) {
 }
 
 //////////////////////////////////////////////////////////////////////
-TEST_F(ConvolutionTests, conv2d_bp_test2) {
+TYPED_TEST(TypedConvolutionTests, conv2d_bp_test2) {
 
     int bS=2, iH=4,iW=3,  iC=4,oC=3,  kH=3,kW=2,  sH=1,sW=1,  pH=0,pW=0,  dH=1,dW=1;    
     int       oH=2,oW=2;
     int paddingMode = 0;             // 1-SAME, 0-VALID;
     int dataFormat  = 1;             // 1-NHWC, 0-NCHW    
 
-    NDArray<double> input   ('c', {bS, iH, iW, iC});
-    NDArray<double> weights ('c', {kH, kW, iC, oC});
-    NDArray<double> bias    ('c', {oC}, {1,2,3});
-    NDArray<double> gradO   ('c', {bS, oH, oW, oC});
+    NDArray<TypeParam> input   ('c', {bS, iH, iW, iC});
+    NDArray<TypeParam> weights ('c', {kH, kW, iC, oC});
+    NDArray<TypeParam> bias    ('c', {oC}, {1,2,3});
+    NDArray<TypeParam> gradO   ('c', {bS, oH, oW, oC});
     
-    NDArray<double> expGradI('c', {bS, iH, iW, iC},{ 0.014,0.032, 0.05 , 0.068,0.118,0.181, 0.244, 0.307,0.212,0.257, 0.302, 0.347,0.208,0.298, 0.388, 0.478,1.028,1.262, 1.496, 1.73 ,1.036,1.18 , 1.324, 1.468,
+    NDArray<TypeParam> expGradI('c', {bS, iH, iW, iC},{ 0.014,0.032, 0.05 , 0.068,0.118,0.181, 0.244, 0.307,0.212,0.257, 0.302, 0.347,0.208,0.298, 0.388, 0.478,1.028,1.262, 1.496, 1.73 ,1.036,1.18 , 1.324, 1.468,
                                                      0.928,1.018, 1.108, 1.198,2.9  ,3.134, 3.368, 3.602,2.188,2.332, 2.476, 2.62 ,1.202,1.274, 1.346, 1.418,3.142,3.313, 3.484, 3.655,2.048,2.147, 2.246, 2.345,
                                                      0.086,0.212, 0.338, 0.464,0.694,0.973, 1.252, 1.531,0.716,0.869, 1.022, 1.175,1.216,1.522, 1.828, 2.134,3.908,4.574, 5.24 , 5.906,2.908,3.268, 3.628, 3.988,
                                                      3.664,3.97 , 4.276, 4.582,9.236,9.902,10.568,11.234,5.788,6.148, 6.508, 6.868,3.002,3.182, 3.362, 3.542,7.174,7.561, 7.948, 8.335,4.28 ,4.487, 4.694, 4.901});
     
-    NDArray<double> expGradW('c', {kH, kW, iC, oC},{1.84, 2., 2.16,1.84, 2., 2.16,1.84, 2., 2.16,1.84, 2., 2.16,1.84, 2., 2.16,1.84, 2., 2.16,1.84, 2., 2.16,1.84, 2., 2.16,
+    NDArray<TypeParam> expGradW('c', {kH, kW, iC, oC},{1.84, 2., 2.16,1.84, 2., 2.16,1.84, 2., 2.16,1.84, 2., 2.16,1.84, 2., 2.16,1.84, 2., 2.16,1.84, 2., 2.16,1.84, 2., 2.16,
                                                     1.84, 2., 2.16,1.84, 2., 2.16,1.84, 2., 2.16,1.84, 2., 2.16,1.84, 2., 2.16,1.84, 2., 2.16,1.84, 2., 2.16,1.84, 2., 2.16,
                                                     1.84, 2., 2.16,1.84, 2., 2.16,1.84, 2., 2.16,1.84, 2., 2.16,1.84, 2., 2.16,1.84, 2., 2.16,1.84, 2., 2.16,1.84, 2., 2.16});
-    // NDArray<double> expGradB('c', {oC},{});
+    // NDArray<TypeParam> expGradB('c', {oC},{});
 
     input = 2.;
     weights.linspace(0.1, 0.1);
     gradO.linspace(0.01, 0.01);    
 
-    nd4j::ops::conv2d_bp<double> op;
-    ResultSet<double>* results = op.execute({&input, &weights, &bias, &gradO}, {}, {kH,kW,  sH,sW,  pH,pW,  dH,dW, paddingMode, dataFormat});
-    NDArray<double>* gradI = results->at(0);
-    NDArray<double>* gradW = results->at(1);    
+    nd4j::ops::conv2d_bp<TypeParam> op;
+    ResultSet<TypeParam>* results = op.execute({&input, &weights, &bias, &gradO}, {}, {kH,kW,  sH,sW,  pH,pW,  dH,dW, paddingMode, dataFormat});
+    NDArray<TypeParam>* gradI = results->at(0);
+    NDArray<TypeParam>* gradW = results->at(1);    
 
     ASSERT_EQ(Status::OK(), results->status());
 
@@ -1197,28 +1197,28 @@ TEST_F(ConvolutionTests, conv2d_bp_test2) {
 }
 
 //////////////////////////////////////////////////////////////////////
-TEST_F(ConvolutionTests, conv2d_bp_test3) {
+TYPED_TEST(TypedConvolutionTests, conv2d_bp_test3) {
 
     int bS=2, iH=4,iW=3,  iC=4,oC=3,  kH=3,kW=2,  sH=1,sW=1,  pH=0,pW=0,  dH=1,dW=1;    
     int       oH=2,oW=2;
     int paddingMode = 0;             // 1-SAME, 0-VALID;
     int dataFormat  = 0;             // 1-NHWC, 0-NCHW    
 
-    NDArray<double> input   ('c', {bS, iC, iH, iW});
-    NDArray<double> weights ('c', {oC, iC, kH, kW});
-    NDArray<double> bias    ('c', {oC}, {1,2,3});
-    NDArray<double> gradO   ('c', {bS, oC, oH, oW});
+    NDArray<TypeParam> input   ('c', {bS, iC, iH, iW});
+    NDArray<TypeParam> weights ('c', {oC, iC, kH, kW});
+    NDArray<TypeParam> bias    ('c', {oC}, {1,2,3});
+    NDArray<TypeParam> gradO   ('c', {bS, oC, oH, oW});
     
-    NDArray<double> expGradI('c', {bS, iC, iH, iW},{ 0.567, 1.224,0.66 ,1.314, 2.82 ,1.512,1.386, 2.976,1.596,0.801, 1.71 ,0.912,0.657, 1.422,0.768,1.53 , 3.288,1.764,1.602, 3.444,1.848,0.927, 1.98 ,1.056,
+    NDArray<TypeParam> expGradI('c', {bS, iC, iH, iW},{ 0.567, 1.224,0.66 ,1.314, 2.82 ,1.512,1.386, 2.976,1.596,0.801, 1.71 ,0.912,0.657, 1.422,0.768,1.53 , 3.288,1.764,1.602, 3.444,1.848,0.927, 1.98 ,1.056,
                                                      0.747, 1.62 ,0.876,1.746, 3.756,2.016,1.818, 3.912,2.1  ,1.053, 2.25 ,1.2  ,0.837, 1.818,0.984,1.962, 4.224,2.268,2.034, 4.38 ,2.352,1.179, 2.52 ,1.344,
                                                      1.467, 3.06 ,1.596,3.186, 6.636,3.456,3.402, 7.08 ,3.684,1.845, 3.834,1.992,1.773, 3.69 ,1.92 ,3.834, 7.968,4.14 ,4.05 , 8.412,4.368,2.187, 4.536,2.352,
                                                      2.079, 4.32 ,2.244,4.482, 9.3  ,4.824,4.698, 9.744,5.052,2.529, 5.238,2.712,2.385, 4.95 ,2.568,5.13 ,10.632,5.508,5.346,11.076,5.736,2.871, 5.94 ,3.072});
     
-    NDArray<double> expGradW('c', {oC, iC, kH, kW},{1.3600e+00,1.3600e+00,1.3600e+00,1.3600e+00,1.3600e+00,1.3600e+00,1.3600e+00,1.3600e+00,1.3600e+00,1.3600e+00,1.3600e+00,1.3600e+00,1.3600e+00,1.3600e+00,1.3600e+00,1.3600e+00,1.3600e+00,1.3600e+00,
+    NDArray<TypeParam> expGradW('c', {oC, iC, kH, kW},{1.3600e+00,1.3600e+00,1.3600e+00,1.3600e+00,1.3600e+00,1.3600e+00,1.3600e+00,1.3600e+00,1.3600e+00,1.3600e+00,1.3600e+00,1.3600e+00,1.3600e+00,1.3600e+00,1.3600e+00,1.3600e+00,1.3600e+00,1.3600e+00,
                                                     1.3600e+00,1.3600e+00,1.3600e+00,1.3600e+00,1.3600e+00,1.3600e+00,2.0000e+00,2.0000e+00,2.0000e+00,2.0000e+00,2.0000e+00,2.0000e+00,2.0000e+00,2.0000e+00,2.0000e+00,2.0000e+00,2.0000e+00,2.0000e+00,
                                                     2.0000e+00,2.0000e+00,2.0000e+00,2.0000e+00,2.0000e+00,2.0000e+00,2.0000e+00,2.0000e+00,2.0000e+00,2.0000e+00,2.0000e+00,2.0000e+00,2.6400e+00,2.6400e+00,2.6400e+00,2.6400e+00,2.6400e+00,2.6400e+00,
                                                     2.6400e+00,2.6400e+00,2.6400e+00,2.6400e+00,2.6400e+00,2.6400e+00,2.6400e+00,2.6400e+00,2.6400e+00,2.6400e+00,2.6400e+00,2.6400e+00,2.6400e+00,2.6400e+00,2.6400e+00,2.6400e+00,2.6400e+00,2.6400e+00});
-    NDArray<double> expGradB('c', {oC},{0.68, 1., 1.32});
+    NDArray<TypeParam> expGradB('c', {oC},{0.68, 1., 1.32});
 
     input = 2.;
     weights.linspace(0.1, 0.1);
@@ -1226,11 +1226,11 @@ TEST_F(ConvolutionTests, conv2d_bp_test3) {
     weights.permutei({2,3,1,0});    
     expGradW.permutei({2,3,1,0});
 
-    nd4j::ops::conv2d_bp<double> op;
-    ResultSet<double>* results = op.execute({&input, &weights, &bias, &gradO}, {}, {kH,kW,  sH,sW,  pH,pW,  dH,dW, paddingMode, dataFormat});
-    NDArray<double>* gradI = results->at(0);
-    NDArray<double>* gradW = results->at(1);    
-    NDArray<double>* gradB = results->at(2);    
+    nd4j::ops::conv2d_bp<TypeParam> op;
+    ResultSet<TypeParam>* results = op.execute({&input, &weights, &bias, &gradO}, {}, {kH,kW,  sH,sW,  pH,pW,  dH,dW, paddingMode, dataFormat});
+    NDArray<TypeParam>* gradI = results->at(0);
+    NDArray<TypeParam>* gradW = results->at(1);    
+    NDArray<TypeParam>* gradB = results->at(2);    
 
     ASSERT_EQ(Status::OK(), results->status());
 

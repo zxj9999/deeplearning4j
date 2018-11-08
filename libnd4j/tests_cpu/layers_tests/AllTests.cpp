@@ -41,5 +41,7 @@
 
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
+//    nd4j::Environment::getInstance()->setDebug(true);
+//    nd4j::Environment::getInstance()->setVerbose(true);
     return RUN_ALL_TESTS();
 }
