@@ -76,7 +76,8 @@ namespace nd4j {
             // evaluates sizes values and indexes using input and output arrays depending on data format
             static void getSizesAndIndexesConv3d(const bool isNCDHW, const NDArray<T>& input, const NDArray<T>& output, int& bS, int& iC, int& iD, int& iH, int& iW, int& oC, int& oD, int& oH, int& oW, int& indIOioC, int& indIOioD, int& indWiC, int& indWoC, int& indWkD);
 #ifdef HAVE_MKLDNN
-            static void getMKLDNNMemoryDescConv2d(int kH, int kW, int sH, int sW, int pH, int pW, int dH, int dW, bool isSameMode, bool isNCHW,
+            static void getMKLDNNMemoryDescConv2d(
+                    int kH, int kW, int sH, int sW, int pH, int pW, int dH, int dW, bool isSameMode, bool isNCHW,
                     int bS, int iC, int iH, int iW, int oC, int oH, int oW, const NDArray<T>* src, const NDArray<T>* diff_src,
                     const NDArray<T>* weights, const NDArray<T>* diff_weights, const NDArray<T>* bias, const NDArray<T>* dst,
                     mkldnn::memory::desc* conv_src_md, mkldnn::memory::desc* conv_diff_src_md, mkldnn::memory::desc* conv_weights_md,
@@ -104,14 +105,21 @@ namespace nd4j {
             static void upsampling2dBP(const NDArray<T>& gradO, NDArray<T>& gradI, const bool isNCHW);
 
             static void upsampling3dBP(const NDArray<T>& gradO, NDArray<T>& gradI, const bool isNCDHW);
-
-            static void maxPool2d(NDArray<T>* input, NDArray<T>* output, const std::vector<int>& params, NDArray<T>* indices);
+#ifdef HAVE_MKLDNN
+            static void getMKLDNNMemoryDescPool2d(
+                    int kH, int kW, int sH, int sW, int pH, int pW, int dH, int dW, int poolingMode, int extraParam0, bool isNCHW,
+                    int bS, int iC, int iH, int iW, int oC, int oH, int oW,
+                    const NDArray<T>* src, const NDArray<T>* diff_src, const NDArray<T>* dst,
+                    mkldnn::memory::desc* pool_src_md, mkldnn::memory::desc* conv_diff_src_md, mkldnn::memory::desc* pool_dst_md, mkldnn::algorithm& algorithm,
+                    mkldnn::memory::dims& pool_strides, mkldnn::memory::dims& pool_kernel, mkldnn::memory::dims& pool_padding, mkldnn::memory::dims& pool_padding_r);
+#endif
+            static void maxPool2d(nd4j::graph::Context<T>& block, NDArray<T>* input, NDArray<T>* output, const std::vector<int>& params, NDArray<T>* indices);
 
             static void pooling3d(NDArray<T>& input, NDArray<T>& output, const T* extraParams);
 
-            static void pooling2d(NDArray<T>& input, NDArray<T>& output, const T* extraParams);
+            static void pooling2d(nd4j::graph::Context<T>& block, NDArray<T>& input, NDArray<T>& output, const T* extraParams);
 
-            static void pooling2dBP(NDArray<T>& input, NDArray<T>& gradO, NDArray<T>& gradI, const T* extraParams);
+            static void pooling2dBP(nd4j::graph::Context<T>& block, NDArray<T>& input, NDArray<T>& gradO, NDArray<T>& gradI, const T* extraParams);
 
             static void pooling3dBP(NDArray<T>& input, NDArray<T>& gradO, NDArray<T>& gradI, const T* extraParams);
 

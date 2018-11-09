@@ -80,7 +80,7 @@ namespace nd4j {
                     static_cast<T>(2.f),
                     static_cast<T>(extraParam0)};
 
-            ConvolutionUtils<T>::pooling2d(*input, *output, argT.data());
+            ConvolutionUtils<T>::pooling2d(block, *input, *output, argT.data());
 
             if (!isNCHW) {
                 delete input;
@@ -211,7 +211,7 @@ CUSTOM_OP_IMPL(pnormpool2d_bp, 2, 1, false, 1, 10) {
     // columns->template applyTransform<simdOps::Col2Im<T>>(gradI, std::vector<T>({(T)sH, (T)sW, (T)pH, (T)pW, (T)iH, (T)iW, (T)dH, (T)dW}).data());
     
     std::vector<T> argT = {(T) kH, (T) kW, (T) sH, (T) sW, (T) pH, (T) pW, (T) dH, (T)dW, 2., (T)pnorm};
-    ConvolutionUtils<T>::pooling2dBP(*input, *gradO, *gradI, argT.data());
+    ConvolutionUtils<T>::pooling2dBP(block, *input, *gradO, *gradI, argT.data());
 
     if(!isNCHW) {
         delete input;

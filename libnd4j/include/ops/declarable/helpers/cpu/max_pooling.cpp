@@ -27,7 +27,7 @@ namespace ops {
 namespace helpers {
 
     template <typename T>
-    void maxPoolingFunctor(NDArray<T>* input, NDArray<T>* values, std::vector<int> const& params, NDArray<T>* indices) {
+    void maxPoolingFunctor(nd4j::graph::Context<T>& block, NDArray<T>* input, NDArray<T>* values, std::vector<int> const& params, NDArray<T>* indices) {
 
             int kY = params[0];
             int kX = params[1];
@@ -59,7 +59,7 @@ namespace helpers {
 
             // 0,1 - kernel Height/Width; 2,3 - stride Height/Width; 4,5 - pad Height/Width; 6,7 - dilation Height/Width; 8,9 - poolingMode; 10 - divisor;
             std::vector<T> argT = {(T) kY, (T) kX, (T) sY, (T) sX, (T) pY, (T) pX, (T) dY, (T)dX, (T)1.f, (T)0.f, (T)1.f};
-            ConvolutionUtils<T>::pooling2d(*input, *values, argT.data());
+            ConvolutionUtils<T>::pooling2d(block, *input, *values, argT.data());
             
             if (nullptr != indices) {
                 // for max_pool_with_argmax 
@@ -73,9 +73,9 @@ namespace helpers {
             }
 
     }
-    template void maxPoolingFunctor<float>(NDArray<float>* input, NDArray<float>* values, std::vector<int> const& params, NDArray<float>* indices);
-    template void maxPoolingFunctor<float16>(NDArray<float16>* input, NDArray<float16>* values, std::vector<int> const& params, NDArray<float16>* indices);
-    template void maxPoolingFunctor<double>(NDArray<double>* input, NDArray<double>* values, std::vector<int> const& params, NDArray<double>* indices);
+    template void maxPoolingFunctor<float>(nd4j::graph::Context<float>& block, NDArray<float>* input, NDArray<float>* values, std::vector<int> const& params, NDArray<float>* indices);
+    template void maxPoolingFunctor<float16>(nd4j::graph::Context<float16>& block, NDArray<float16>* input, NDArray<float16>* values, std::vector<int> const& params, NDArray<float16>* indices);
+    template void maxPoolingFunctor<double>(nd4j::graph::Context<double>& block, NDArray<double>* input, NDArray<double>* values, std::vector<int> const& params, NDArray<double>* indices);
 
 }
 }

@@ -74,7 +74,7 @@ CUSTOM_OP_IMPL(maxpool2d, 1, 1, false, 0, 9) {
     // 0,1 - kernel Height/Width; 2,3 - stride Height/Width; 4,5 - pad Height/Width; 6,7 - dilation Height/Width; poolingMode; 9 - divisor;            
     T extraParams[] = {(T)kH, (T)kW, (T)sH, (T)sW, (T)pH, (T)pW, (T)dH, (T)dW, 0.f, 1.f};    
 
-    ConvolutionUtils<T>::pooling2d(*input, *output, extraParams);
+    ConvolutionUtils<T>::pooling2d(block, *input, *output, extraParams);
             
     if (!isNCHW) {
         delete input;
@@ -192,7 +192,7 @@ CUSTOM_OP_IMPL(maxpool2d_bp, 2, 1, false, 0, 10) {
     // columns->template applyTransform<simdOps::Col2Im<T>>(gradI, std::vector<T>({(T)sH, (T)sW, (T)pH, (T)pW, (T)iH, (T)iW, (T)dH, (T)dW}).data());
     
     std::vector<T> argT = {(T) kH, (T) kW, (T) sH, (T) sW, (T) pH, (T) pW, (T) dH, (T)dW, 0., 1.};
-    ConvolutionUtils<T>::pooling2dBP(*input, *gradO, *gradI, argT.data());
+    ConvolutionUtils<T>::pooling2dBP(block, *input, *gradO, *gradI, argT.data());
 
 
     if(!isNCHW) {
