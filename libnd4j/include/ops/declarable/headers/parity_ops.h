@@ -1503,6 +1503,25 @@ namespace nd4j {
         DECLARE_CUSTOM_OP(non_max_suppression, 2, 1, false, 0, 0);
         #endif
 
+        /**
+         * fake_quant_with_min_max_vals - tf.quantization.fake_quant_with_min_max_vars
+         * 
+         * input params:
+         *    0 - NDArray (input)
+         *    1 - 0D Tensor - min value
+         *    2 - 0D Tensor - max value
+         *
+         * int params (optional):
+         *    0 - num_bits (allowed interval [2, 16], default 8)
+         *    1 - narrow_range (default False)
+         *
+         * output:
+         *    0 - NDArray with the same shape as input
+         */
+        #if NOT_EXCLUDED(OP_fake_quant_with_min_max_vals)
+        DECLARE_CONFIGURABLE_OP(fake_quant_with_min_max_vals, 3, 1, true, 0, 2);
+        #endif
+
     }
 }
 
