@@ -1731,8 +1731,28 @@ TEST_F(DeclarableOpsTests10, ReduceLogSumExpTest_2) {
     ASSERT_EQ(ND4J_STATUS_OK, results->status());
 
     auto result = results->at(0);
-    result->printIndexedBuffer("REDUCE_LOGSUMEXP");
-    expected.printIndexedBuffer("LSE EXPECTED");
+//    result->printIndexedBuffer("REDUCE_LOGSUMEXP");
+//    expected.printIndexedBuffer("LSE EXPECTED");
+    ASSERT_TRUE(expected.isSameShapeStrict(result));
+    ASSERT_TRUE(expected.equalsTo(result));
+
+    delete results;
+}
+////////////////////////////////////////////////////////////////////
+TEST_F(DeclarableOpsTests10, ReduceLogSumExpTest_3) {
+
+    NDArray<float> input   ('c', {3,3}, {0, 1, 0, 0, 1, 0, 0, 0, 0});
+
+    NDArray<float> expected('c', {1,3}, {1.0986123f, 1.8619947f, 1.0986123f});
+
+    nd4j::ops::reduce_logsumexp<float> op;
+    auto results = op.execute({&input}, {1.f}, {0});
+
+    ASSERT_EQ(ND4J_STATUS_OK, results->status());
+
+    auto result = results->at(0);
+//    result->printIndexedBuffer("REDUCE_LOGSUMEXP");
+//    expected.printIndexedBuffer("LSE EXPECTED");
     ASSERT_TRUE(expected.isSameShapeStrict(result));
     ASSERT_TRUE(expected.equalsTo(result));
 
