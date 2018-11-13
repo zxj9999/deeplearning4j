@@ -1440,6 +1440,27 @@ namespace nd4j {
         #if NOT_EXCLUDED(OP_reduce_logsumexp)
         DECLARE_CUSTOM_OP(reduce_logsumexp, 1, 1, false, 0, 0);
         #endif
+
+        /**
+        * This op make bilinear interpolated resize for given tensor
+        *
+        * input array:
+        *    0 - 4D-Tensor with shape (batch, sizeX, sizeY, channels)
+        *    1 - 1D-Tensor with 2 values (newWidth, newHeight) (optional)
+        *
+        * int arguments: (optional)
+        *   0 - new width
+        *   1 - new height
+        *
+        * output array:
+        *   the tensor with calculated backproped dots
+        *
+        * CAUTION: either size tensor or a pair of int params should be provided.
+        */
+        #if NOT_EXCLUDED(OP_crop_and_resize)
+        DECLARE_CUSTOM_OP(crop_and_resize, 4, 1, false, -1, -1);
+        #endif
+
         /**
         * This op make bilinear interpolated resize for given tensor
         *
@@ -1518,8 +1539,8 @@ namespace nd4j {
          * output:
          *    0 - NDArray with the same shape as input
          */
-        #if NOT_EXCLUDED(OP_fake_quant_with_min_max_vals)
-        DECLARE_CONFIGURABLE_OP(fake_quant_with_min_max_vals, 3, 1, true, 0, 2);
+        #if NOT_EXCLUDED(OP_fake_quant_with_min_max_vars)
+        DECLARE_CONFIGURABLE_OP(fake_quant_with_min_max_vars, 3, 1, true, 0, 2);
         #endif
 
     }
