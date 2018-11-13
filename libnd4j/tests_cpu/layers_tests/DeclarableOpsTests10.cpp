@@ -1699,6 +1699,47 @@ TEST_F(DeclarableOpsTests10, ImageResizeBilinear_Test4) {
 }
 
 ////////////////////////////////////////////////////////////////////
+TEST_F(DeclarableOpsTests10, ReduceLogSumExpTest_1) {
+
+    NDArray<float> input   ('c', {3,3}, {0, 1, 0, 0, 1, 0, 0, 0, 0});
+
+    NDArray<float> expected(2.5206409f);
+
+    nd4j::ops::reduce_logsumexp<float> op;
+    auto results = op.execute({&input}, {}, {});
+
+    ASSERT_EQ(ND4J_STATUS_OK, results->status());
+
+    auto result = results->at(0);
+
+    ASSERT_TRUE(expected.isSameShapeStrict(result));
+    ASSERT_TRUE(expected.equalsTo(result));
+
+    delete results;
+}
+
+////////////////////////////////////////////////////////////////////
+TEST_F(DeclarableOpsTests10, ReduceLogSumExpTest_2) {
+
+    NDArray<float> input   ('c', {3,3}, {0, 1, 0, 0, 1, 0, 0, 0, 0});
+
+    NDArray<float> expected({1.0986123f, 1.8619947f, 1.0986123f});
+
+    nd4j::ops::reduce_logsumexp<float> op;
+    auto results = op.execute({&input}, {}, {0});
+
+    ASSERT_EQ(ND4J_STATUS_OK, results->status());
+
+    auto result = results->at(0);
+    result->printIndexedBuffer("REDUCE_LOGSUMEXP");
+    expected.printIndexedBuffer("LSE EXPECTED");
+    ASSERT_TRUE(expected.isSameShapeStrict(result));
+    ASSERT_TRUE(expected.equalsTo(result));
+
+    delete results;
+}
+
+////////////////////////////////////////////////////////////////////
 TEST_F(DeclarableOpsTests10, pad_tests10) {
 
     NDArray<float> input   ('c', {2,3,4});
