@@ -44,9 +44,9 @@ namespace helpers {
     };
 
     inline void computeInterpolationWeights(Nd4jLong outSize,
-                                              Nd4jLong inSize,
-                                              double scale,
-                                              BilinearInterpolationData* interpolationData) {
+                                            Nd4jLong inSize,
+                                            double scale,
+                                            BilinearInterpolationData *interpolationData) {
         interpolationData[outSize].bottomIndex = 0;
         interpolationData[outSize].topIndex = 0;
         for (Nd4jLong i = outSize - 1; i >= 0; --i) {
@@ -62,28 +62,29 @@ namespace helpers {
  * and the linear interpolation weights.
  */
     inline double computeBilinear(double topLeft, double topRight,
-                              double bottomLeft, double bottomRight,
-                              double xVal, double yVal) {
+                                  double bottomLeft, double bottomRight,
+                                  double xVal, double yVal) {
         double top = topLeft + (topRight - topLeft) * xVal;
         double bottom = bottomLeft + (bottomRight - bottomLeft) * xVal;
         return top + (bottom - top) * yVal;
     }
 
-    template <typename T>
-    static void resizeImage(NDArray<T> const* images, Nd4jLong batchSize, Nd4jLong inHeight, Nd4jLong inWidth, Nd4jLong outHeight,
-                     Nd4jLong outWidth, Nd4jLong channels,
-                     std::vector<BilinearInterpolationData> const& xs,
-                     std::vector<BilinearInterpolationData> const& ys,
-                     NDArray<T>* output) {
+    template<typename T>
+    static void
+    resizeImage(NDArray<T> const *images, Nd4jLong batchSize, Nd4jLong inHeight, Nd4jLong inWidth, Nd4jLong outHeight,
+                Nd4jLong outWidth, Nd4jLong channels,
+                std::vector<BilinearInterpolationData> const &xs,
+                std::vector<BilinearInterpolationData> const &ys,
+                NDArray<T> *output) {
 
         Nd4jLong inRowSize = inWidth * channels;
         Nd4jLong inBatchNumValues = inHeight * inRowSize;
         Nd4jLong outRowSize = outWidth * channels;
 
-        T const* input_b_ptr = images->getBuffer(); // this works only with 'c' direction
-        BilinearInterpolationData const* xs_ = xs.data();
+        T const *input_b_ptr = images->getBuffer(); // this works only with 'c' direction
+        BilinearInterpolationData const *xs_ = xs.data();
 
-        T* output_y_ptr = output->buffer();
+        T *output_y_ptr = output->buffer();
         for (Nd4jLong b = 0; b < batchSize; ++b) {
             for (Nd4jLong y = 0; y < outHeight; ++y) {
                 const T *ys_input_lower_ptr = input_b_ptr + ys[y].bottomIndex * inRowSize;
@@ -100,7 +101,7 @@ namespace helpers {
                         double bottomRight(ys_input_upper_ptr[xsTop + c]);
                         output_y_ptr[x * channels + c] =
                                 computeBilinear(topLeft, topRight, bottomLeft, bottomRight,
-                                             xVal, yVal);
+                                                xVal, yVal);
                     }
                 }
                 output_y_ptr += outRowSize;
@@ -109,30 +110,33 @@ namespace helpers {
         }
     }
 
-    template void resizeImage(NDArray<float> const* images, Nd4jLong batchSize, Nd4jLong inHeight, Nd4jLong inWidth, Nd4jLong outHeight,
-                            Nd4jLong outWidth, Nd4jLong channels,
-                            std::vector<BilinearInterpolationData> const& xs,
-                            std::vector<BilinearInterpolationData> const& ys,
-                            NDArray<float>* output);
+    template void resizeImage(NDArray<float> const *images, Nd4jLong batchSize, Nd4jLong inHeight, Nd4jLong inWidth,
+                              Nd4jLong outHeight,
+                              Nd4jLong outWidth, Nd4jLong channels,
+                              std::vector<BilinearInterpolationData> const &xs,
+                              std::vector<BilinearInterpolationData> const &ys,
+                              NDArray<float> *output);
 
-    template void resizeImage(NDArray<float16> const* images, Nd4jLong batchSize, Nd4jLong inHeight, Nd4jLong inWidth, Nd4jLong outHeight,
-                     Nd4jLong outWidth, Nd4jLong channels,
-                     std::vector<BilinearInterpolationData> const& xs,
-                     std::vector<BilinearInterpolationData> const& ys,
-                     NDArray<float16>* output);
+    template void resizeImage(NDArray<float16> const *images, Nd4jLong batchSize, Nd4jLong inHeight, Nd4jLong inWidth,
+                              Nd4jLong outHeight,
+                              Nd4jLong outWidth, Nd4jLong channels,
+                              std::vector<BilinearInterpolationData> const &xs,
+                              std::vector<BilinearInterpolationData> const &ys,
+                              NDArray<float16> *output);
 
-    template void resizeImage(NDArray<double> const* images, Nd4jLong batchSize, Nd4jLong inHeight, Nd4jLong inWidth, Nd4jLong outHeight,
-                     Nd4jLong outWidth, Nd4jLong channels,
-                     std::vector<BilinearInterpolationData> const& xs,
-                     std::vector<BilinearInterpolationData> const& ys,
-                     NDArray<double>* output);
+    template void resizeImage(NDArray<double> const *images, Nd4jLong batchSize, Nd4jLong inHeight, Nd4jLong inWidth,
+                              Nd4jLong outHeight,
+                              Nd4jLong outWidth, Nd4jLong channels,
+                              std::vector<BilinearInterpolationData> const &xs,
+                              std::vector<BilinearInterpolationData> const &ys,
+                              NDArray<double> *output);
 
-    template <typename T>
-    int resizeBilinearFunctor(NDArray<T> const* images, int width, int height, bool center, NDArray<T>* output) {
+    template<typename T>
+    int resizeBilinearFunctor(NDArray<T> const *images, int width, int height, bool center, NDArray<T> *output) {
         const Nd4jLong batchSize = images->sizeAt(0);
-        const Nd4jLong inHeight  = images->sizeAt(1);
-        const Nd4jLong inWidth   = images->sizeAt(2);
-        const Nd4jLong channels  = images->sizeAt(3);
+        const Nd4jLong inHeight = images->sizeAt(1);
+        const Nd4jLong inWidth = images->sizeAt(2);
+        const Nd4jLong channels = images->sizeAt(3);
 
         const Nd4jLong outHeight = output->sizeAt(1);
         const Nd4jLong outWidth = output->sizeAt(2);
@@ -149,36 +153,42 @@ namespace helpers {
             nd4j_printf("image.resize_bilinear: Wrong input or output size to resize\n", "");
             return ND4J_STATUS_BAD_ARGUMENTS;
         }
-        double heightScale = center? (inHeight - 1.) / double(outHeight - 1.0): (inHeight / double(outHeight));
-        double widthScale = center? (inWidth - 1.) / double(outWidth - 1.0): (inWidth / double(outWidth));
+        double heightScale = center ? (inHeight - 1.) / double(outHeight - 1.0) : (inHeight / double(outHeight));
+        double widthScale = center ? (inWidth - 1.) / double(outWidth - 1.0) : (inWidth / double(outWidth));
 
         std::vector<BilinearInterpolationData> ys(outHeight + 1);
         std::vector<BilinearInterpolationData> xs(outWidth + 1);
 
         // Compute the cached interpolation weights on the x and y dimensions.
         computeInterpolationWeights(outHeight, inHeight, heightScale,
-                                      ys.data());
+                                    ys.data());
         computeInterpolationWeights(outWidth, inWidth, widthScale, xs.data());
 
         // Scale x interpolation weights to avoid a multiplication during iteration.
         for (int i = 0; i < xs.size(); ++i) {
             xs[i].bottomIndex *= channels;
-            xs[i].topIndex    *= channels;
+            xs[i].topIndex *= channels;
         }
 
-        resizeImage(images, batchSize, inHeight, inWidth, outHeight,  outWidth, channels, xs, ys, output);
+        resizeImage(images, batchSize, inHeight, inWidth, outHeight, outWidth, channels, xs, ys, output);
         return ND4J_STATUS_OK;
     }
-    template int resizeBilinearFunctor(NDArray<float> const* image, int width, int height, bool center, NDArray<float>* output);
-    template int resizeBilinearFunctor(NDArray<float16> const* image, int width, int height, bool center, NDArray<float16>* output);
-    template int resizeBilinearFunctor(NDArray<double> const* image, int width, int height, bool center, NDArray<double>* output);
 
-    template <typename T>
-    int resizeNeighborFunctor(NDArray<T> const* images, int width, int height, bool center, NDArray<T>* output) {
+    template int
+    resizeBilinearFunctor(NDArray<float> const *image, int width, int height, bool center, NDArray<float> *output);
+
+    template int
+    resizeBilinearFunctor(NDArray<float16> const *image, int width, int height, bool center, NDArray<float16> *output);
+
+    template int
+    resizeBilinearFunctor(NDArray<double> const *image, int width, int height, bool center, NDArray<double> *output);
+
+    template<typename T>
+    int resizeNeighborFunctor(NDArray<T> const *images, int width, int height, bool center, NDArray<T> *output) {
         const Nd4jLong batchSize = images->sizeAt(0);
-        const Nd4jLong inHeight  = images->sizeAt(1);
-        const Nd4jLong inWidth   = images->sizeAt(2);
-        const Nd4jLong channels  = images->sizeAt(3);
+        const Nd4jLong inHeight = images->sizeAt(1);
+        const Nd4jLong inWidth = images->sizeAt(2);
+        const Nd4jLong channels = images->sizeAt(3);
 
         const Nd4jLong outHeight = output->sizeAt(1);
         const Nd4jLong outWidth = output->sizeAt(2);
@@ -195,26 +205,165 @@ namespace helpers {
             nd4j_printf("image.resize_nearest_neighbor: Wrong input or output size to resize\n", "");
             return ND4J_STATUS_BAD_ARGUMENTS;
         }
-        double heightScale = center? (inHeight - 1.) / double(outHeight - 1.0): (inHeight / double(outHeight));
-        double widthScale = center? (inWidth - 1.) / double(outWidth - 1.0): (inWidth / double(outWidth));
+        double heightScale = center ? (inHeight - 1.) / double(outHeight - 1.0) : (inHeight / double(outHeight));
+        double widthScale = center ? (inWidth - 1.) / double(outWidth - 1.0) : (inWidth / double(outWidth));
 
         for (int b = 0; b < batchSize; ++b) {
-          for (int y = 0; y < outHeight; ++y) {
-            Nd4jLong inY = std::min((center) ? static_cast<Nd4jLong>(roundf(y * heightScale)): static_cast<Nd4jLong>(floorf(y * heightScale)), inHeight - 1);
-            for (int x = 0; x < outWidth; ++x) {
-              Nd4jLong inX = std::min((center) ? static_cast<Nd4jLong>(roundf(x * widthScale)) : static_cast<Nd4jLong>(floorf(x * widthScale)), inWidth - 1);
-              for (Nd4jLong e = 0; e < channels; e++)
-                  (*output)(b, y, x, e) = (*images)(b, inY, inX, e);
+            for (int y = 0; y < outHeight; ++y) {
+                Nd4jLong inY = std::min(
+                        (center) ? static_cast<Nd4jLong>(roundf(y * heightScale)) : static_cast<Nd4jLong>(floorf(
+                                y * heightScale)), inHeight - 1);
+                for (int x = 0; x < outWidth; ++x) {
+                    Nd4jLong inX = std::min(
+                            (center) ? static_cast<Nd4jLong>(roundf(x * widthScale)) : static_cast<Nd4jLong>(floorf(
+                                    x * widthScale)), inWidth - 1);
+                    for (Nd4jLong e = 0; e < channels; e++)
+                        (*output)(b, y, x, e) = (*images)(b, inY, inX, e);
 //              std::copy_n(&input(b, in_y, in_x, 0), channels, &output(b, y, x, 0));
+                }
             }
-          }
         }
 
         return ND4J_STATUS_OK;
     }
-    template int resizeNeighborFunctor(NDArray<float> const* image, int width, int height, bool center, NDArray<float>* output);
-    template int resizeNeighborFunctor(NDArray<float16> const* image, int width, int height, bool center, NDArray<float16>* output);
-    template int resizeNeighborFunctor(NDArray<double> const* image, int width, int height, bool center, NDArray<double>* output);
+
+    template int
+    resizeNeighborFunctor(NDArray<float> const *image, int width, int height, bool center, NDArray<float> *output);
+
+    template int
+    resizeNeighborFunctor(NDArray<float16> const *image, int width, int height, bool center, NDArray<float16> *output);
+
+    template int
+    resizeNeighborFunctor(NDArray<double> const *image, int width, int height, bool center, NDArray<double> *output);
+
+    template<typename T>
+    void cropAndResizeFunctor(NDArray<T> const *images, NDArray<T> const *boxes, NDArray<T> const *indices,
+                              NDArray<T> const *cropSize, int method, T extrapolationVal, NDArray<T> *crops) {
+        const int batchSize = images->sizeAt(0);
+        const int imageHeight = images->sizeAt(1);
+        const int imageWidth = images->sizeAt(2);
+
+        const int numBoxes = crops->sizeAt(0);
+        const int cropHeight = crops->sizeAt(1);
+        const int cropWidth = crops->sizeAt(2);
+        const int depth = crops->sizeAt(3);
+
+        // Sharding across boxes.
+        auto CropAndResizePerBox = [&](int startBox, int limitBox) {
+            for (int b = startBox; b < limitBox; ++b) {
+                T y1 = (*boxes)(b, 0);
+                T x1 = (*boxes)(b, 1);
+                T y2 = (*boxes)(b, 2);
+                T x2 = (*boxes)(b, 3);
+
+                int bIn = (int) (*indices)(b);
+                if (bIn >= batchSize) {
+                    continue;
+                }
+
+                T heightScale = (cropHeight > 1) ? (y2 - y1) * (imageHeight - 1) / (cropHeight - 1) : T(0);
+                T widthScale = (cropWidth > 1) ? (x2 - x1) * (imageWidth - 1) / (cropWidth - 1) : T(0);
+
+                for (int y = 0; y < cropHeight; ++y) {
+                    const float inY = (cropHeight > 1)
+                                      ? y1 * (imageHeight - 1) + y * heightScale
+                                      : 0.5 * (y1 + y2) * (imageHeight - 1);
+                    if (inY < 0 || inY > imageHeight - 1) {
+                        for (int x = 0; x < cropWidth; ++x) {
+                            for (int d = 0; d < depth; ++d) {
+                                (*crops)(b, y, x, d) = extrapolationVal;
+                            }
+                        }
+                        continue;
+                    }
+                    if (method == 0 /* bilinear */) {
+                        const int topYIndex = floorf(inY);
+                        const int bottomYIndex = ceilf(inY);
+                        const float y_lerp = inY - topYIndex;
+
+                        for (int x = 0; x < cropWidth; ++x) {
+                            const float in_x = (cropWidth > 1)
+                                               ? x1 * (imageWidth - 1) + x * widthScale
+                                               : 0.5 * (x1 + x2) * (imageWidth - 1);
+                            if (in_x < 0 || in_x > imageWidth - 1) {
+                                for (int d = 0; d < depth; ++d) {
+                                    (*crops)(b, y, x, d) = extrapolationVal;
+                                }
+                                continue;
+                            }
+                            int left_x_index = floorf(in_x);
+                            int right_x_index = ceilf(in_x);
+                            T x_lerp = in_x - left_x_index;
+
+                            for (int d = 0; d < depth; ++d) {
+                                const float topLeft(static_cast<T>(
+                                                            (*images)(bIn, topYIndex, left_x_index, d)));
+                                const float topRight(static_cast<T>(
+                                                             (*images)(bIn, topYIndex, right_x_index, d)));
+                                const float bottomLeft(static_cast<T>(
+                                                               (*images)(bIn, bottomYIndex, left_x_index, d)));
+                                const float bottomRight(static_cast<T>(
+                                                                (*images)(bIn, bottomYIndex, right_x_index, d)));
+                                const float top = topLeft + (topRight - topLeft) * x_lerp;
+                                const float bottom =
+                                        bottomLeft + (bottomRight - bottomLeft) * x_lerp;
+                                (*crops)(b, y, x, d) = top + (bottom - top) * y_lerp;
+                            }
+                        }
+                    } else {  // method is "nearest neighbor"
+                        for (int x = 0; x < cropWidth; ++x) {
+                            const float inX = (cropWidth > 1)
+                                              ? x1 * (imageWidth - 1) + x * widthScale
+                                              : 0.5 * (x1 + x2) * (imageWidth - 1);
+                            if (inX < 0 || inX > imageWidth - 1) {
+                                for (int d = 0; d < depth; ++d) {
+                                    (*crops)(b, y, x, d) = extrapolationVal;
+                                }
+                                continue;
+                            }
+                            const int closestXIndex = roundf(inX);
+                            const int closestYIndex = roundf(inY);
+                            for (int d = 0; d < depth; ++d) {
+                                (*crops)(b, y, x, d) = static_cast<T>(
+                                        (*images)(bIn, closestYIndex, closestXIndex, d));
+                            }
+                        }
+                    }
+                }
+            }
+        };
+        //for (int b = 0; b < numBoxes; ++b) {
+        CropAndResizePerBox(0, numBoxes);
+        //}
+/*
+    // A rough estimation of the cost for each cropped box.
+    double cost_per_pixel =
+        depth * (Eigen::TensorOpCost::AddCost<float>() * 6 +
+                 Eigen::TensorOpCost::MulCost<float>() * 3 +
+                 Eigen::TensorOpCost::CastCost<T, float>() * 4) +
+        (Eigen::TensorOpCost::AddCost<float>() * 2 +
+         Eigen::TensorOpCost::AddCost<float>() * 3);
+
+    if (method == 1 ) { // nearest neighbor
+      cost_per_pixel = depth * Eigen::TensorOpCost::CastCost<T, float>() +
+                       Eigen::TensorOpCost::AddCost<float>() * 4 +
+                       Eigen::TensorOpCost::MulCost<float>() * 4;
+    }
+    const double cost_per_box = crop_height * crop_width * cost_per_pixel;
+
+    const DeviceBase::CpuWorkerThreads& worker_threads =
+        *(context->device()->tensorflow_cpu_worker_threads());
+    Shard(worker_threads.num_threads, worker_threads.workers, num_boxes,
+          cost_per_box, CropAndResizePerBox);
+
+    return true;
+*/
+    }
+
+
+    template void cropAndResizeFunctor(NDArray<float> const* images, NDArray<float> const* boxes, NDArray<float> const* indices, NDArray<float> const* cropSize, int method, float extrapolationVal, NDArray<float>* crops) ;
+    template void cropAndResizeFunctor(NDArray<float16> const* images, NDArray<float16> const* boxes, NDArray<float16> const* indices, NDArray<float16> const* cropSize, int method, float16 extrapolationVal, NDArray<float16>* crops) ;
+    template void cropAndResizeFunctor(NDArray<double> const* images, NDArray<double> const* boxes, NDArray<double> const* indices, NDArray<double> const* cropSize, int method, double extrapolationVal, NDArray<double>* crops);
 
 }
 }

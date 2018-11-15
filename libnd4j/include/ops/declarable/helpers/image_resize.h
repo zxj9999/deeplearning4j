@@ -30,6 +30,8 @@ namespace helpers {
     int resizeBilinearFunctor(NDArray<T> const* image, int width, int height, bool center, NDArray<T>* output);
     template <typename T>
     int resizeNeighborFunctor(NDArray<T> const* image, int width, int height, bool center, NDArray<T>* output);
+    template <typename T>
+    void cropAndResizeFunctor(NDArray<T> const* images, NDArray<T> const* boxes, NDArray<T> const* indices, NDArray<T> const* cropSize, int method, T extrapolationVal, NDArray<T>* crops);
 }
 }
 }
