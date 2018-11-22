@@ -2411,6 +2411,25 @@ TEST_F(DeclarableOpsTests10, Image_CropAndResize_4) {
 }
 
 ////////////////////////////////////////////////////////////////////
+TEST_F(DeclarableOpsTests10, FakeQuantWithMinMaxVars_Test_1) {
+
+    NDArray<float> x('c', {2,3}, {-63.80f, -63.75f, -63.70f, -63.5f, 0.0f, 0.1f});
+    NDArray<float> exp('c', {2,3},  {-63.75f, -63.75f, -63.75f, -63.5f, 0.0f, 0.0f});
+    NDArray<float> min(-63.65f);
+    NDArray<float> max(0.1f);
+
+    nd4j::ops::fake_quant_with_min_max_vars<float> op;
+    auto results = op.execute({&x, &min, &max}, {}, {});
+
+    ASSERT_EQ(ND4J_STATUS_OK, results->status());
+
+    NDArray<float>* result = results->at(0);
+    ASSERT_TRUE(exp.isSameShapeStrict(result));
+    ASSERT_TRUE(exp.equalsTo(result));
+
+    delete results;
+}
+////////////////////////////////////////////////////////////////////
 TEST_F(DeclarableOpsTests10, batchnorm_new_test1) {
     
     NDArray<double> input   ('c', {2,3,4});
