@@ -40,6 +40,22 @@ public:
     }
 };
 
+template <typename T>
+class TypedDeclarableOpsTests4 : public testing::Test {
+public:
+
+    TypedDeclarableOpsTests4() {
+        printf("\n");
+        fflush(stdout);
+
+        nd4j::ops::adjust_hue<float> op0;
+        nd4j::ops::adjust_saturation<float> op1;
+    }
+};
+
+typedef ::testing::Types<double, float> TestingTypes;
+TYPED_TEST_CASE(TypedDeclarableOpsTests4, TestingTypes);
+
 TEST_F(DeclarableOpsTests4, Test_Pooling_Parity_1) {
     NDArray<float> x('c', {2, 4, 4, 2});
     NDArray<float> exp('c', {2, 2, 2, 2}, {6.f, 7.f,  10.f,  11.f,  22.f,  23.f,  26.f,  27.f,  38.f,  39.f,  42.f,  43.f,  54.f,  55.f,  58.f, 59.f});
@@ -1476,24 +1492,24 @@ TEST_F(DeclarableOpsTests4, relu6_bp_test1) {
 } 
  
 ////////////////////////////////////////////////////////////////////////////////
-TEST_F(DeclarableOpsTests4, LrnTest_1) {
+TYPED_TEST(TypedDeclarableOpsTests4, LrnTest_1) {
 
-    NDArray<double> x( 'c', {2, 2, 2, 2}, { 5.5, 0., 0.3, 5.5, 
+    NDArray<TypeParam> x( 'c', {2, 2, 2, 2}, { 5.5, 0., 0.3, 5.5, 
                                             8.6, 0.,  0., 0.4,
                                             1.5, 1., 1.3, 1.5,
                                             2.6, 2.,  3., 1.4}
     );
 
-    NDArray<double> exp('c', {2, 2, 2, 2}, {
+    NDArray<TypeParam> exp('c', {2, 2, 2, 2}, {
                                             0.98386997,        0.,  0.05358852,  0.9824562,
                                             0.99330735,        0.,          0., 0.37139067,
                                             0.72760683, 0.4850712,   0.5848977, 0.67488194,
                                             0.7581754,  0.58321184, 0.86747235, 0.4048204}
     );
 
-    nd4j::ops::lrn<double> op;
-    ResultSet<double>*  results = op.execute({&x}, {1.0, 1.0, 0.5}, {5});
-    NDArray<double>* out = results->at(0);
+    nd4j::ops::lrn<TypeParam> op;
+    ResultSet<TypeParam>*  results = op.execute({&x}, {1.0, 1.0, 0.5}, {5});
+    NDArray<TypeParam>* out = results->at(0);
         
     ASSERT_EQ(Status::OK(), results->status());
     ASSERT_TRUE(exp.isSameShape(out));
@@ -1506,22 +1522,22 @@ TEST_F(DeclarableOpsTests4, LrnTest_1) {
 
 
 ////////////////////////////////////////////////////////////////////////////////
-TEST_F(DeclarableOpsTests4, LrnTest_2) {
+TYPED_TEST(TypedDeclarableOpsTests4, LrnTest_2) {
 
-    NDArray<double> x( 'c', {2, 2, 2, 2}, { 5.5, 0., 0.3, 5.5, 
+    NDArray<TypeParam> x( 'c', {2, 2, 2, 2}, { 5.5, 0., 0.3, 5.5, 
                                             8.6, 0.,  0., 0.4,
                                             1.5, 1., 1.3, 1.5,
                                             2.6, 2.,  3., 1.4});
 
-    NDArray<double> exp('c', {2, 2, 2, 2}, {
+    NDArray<TypeParam> exp('c', {2, 2, 2, 2}, {
                                             0.98386997,        0.,  0.05358852,  0.9824562,
                                             0.99330735,        0.,          0., 0.37139067,
                                             0.72760683, 0.4850712,   0.5848977, 0.67488194,
                                             0.7581754,  0.58321184, 0.86747235, 0.4048204});
 
-    nd4j::ops::lrn<double> op;
-    ResultSet<double>*  results = op.execute({&x}, {1.0, 1.0, 0.5}, {2});
-    NDArray<double>* out = results->at(0);
+    nd4j::ops::lrn<TypeParam> op;
+    ResultSet<TypeParam>*  results = op.execute({&x}, {1.0, 1.0, 0.5}, {2});
+    NDArray<TypeParam>* out = results->at(0);
         
     ASSERT_EQ(Status::OK(), results->status());
     ASSERT_TRUE(exp.isSameShape(out));
@@ -1533,9 +1549,9 @@ TEST_F(DeclarableOpsTests4, LrnTest_2) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-TEST_F(DeclarableOpsTests4, LrnTest_3) {
+TYPED_TEST(TypedDeclarableOpsTests4, LrnTest_3) {
 
-    NDArray<double> x( 'c', {2, 2, 2, 4}, { 
+    NDArray<TypeParam> x( 'c', {2, 2, 2, 4}, { 
 
                 5.5, 0., 0.3, 5.5,
                 1.5, 0., 1.3, 6.5,
@@ -1547,7 +1563,7 @@ TEST_F(DeclarableOpsTests4, LrnTest_3) {
                 4.5, 1., 0.3, 0.5}
     );
 
-    NDArray<double> exp('c', {2, 2, 2, 4}, {
+    NDArray<TypeParam> exp('c', {2, 2, 2, 4}, {
                      0.9824562,          0., 0.03822664, 0.9824562,
                     0.67488194,          0., 0.18924236, 0.96960944,
                     0.99330735,          0.,         0., 0.37139067,
@@ -1558,9 +1574,9 @@ TEST_F(DeclarableOpsTests4, LrnTest_3) {
                      0.9520745,  0.21039814, 0.06311944, 0.3268602 }
     );
 
-    nd4j::ops::lrn<double> op;
-    ResultSet<double>*  results = op.execute({&x}, {1.0, 1.0, 0.5}, {2});
-    NDArray<double>* out = results->at(0);
+    nd4j::ops::lrn<TypeParam> op;
+    ResultSet<TypeParam>*  results = op.execute({&x}, {1.0, 1.0, 0.5}, {2});
+    NDArray<TypeParam>* out = results->at(0);
         
     ASSERT_EQ(Status::OK(), results->status());
     ASSERT_TRUE(exp.isSameShape(out));
@@ -1572,9 +1588,9 @@ TEST_F(DeclarableOpsTests4, LrnTest_3) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-TEST_F(DeclarableOpsTests4, LrnTest_4) {
+TYPED_TEST(TypedDeclarableOpsTests4, LrnTest_4) {
 
-    NDArray<double> x( 'c', {2, 2, 2, 4}, { 
+    NDArray<TypeParam> x( 'c', {2, 2, 2, 4}, { 
 
                     5.5, 0., 0.3, 5.5,
                     1.5, 0., 1.3, 6.5,
@@ -1586,7 +1602,7 @@ TEST_F(DeclarableOpsTests4, LrnTest_4) {
                     4.5, 1., 0.3, 0.5}
     );
 
-    NDArray<double> exp('c', {2, 2, 2, 4}, {
+    NDArray<TypeParam> exp('c', {2, 2, 2, 4}, {
                     0.70082176,         0., 0.03822664, 0.70082176,
                     0.21835658,         0., 0.18924236,  0.9462118,
                      0.9922489,         0.,         0., 0.04615111,
@@ -1597,9 +1613,9 @@ TEST_F(DeclarableOpsTests4, LrnTest_4) {
                     0.94679165, 0.21039814, 0.06311944, 0.10519907}
     );
 
-    nd4j::ops::lrn<double> op;
-    ResultSet<double>*  results = op.execute({&x}, {1.0, 1.0, 0.5}, {5});
-    NDArray<double>* out = results->at(0);
+    nd4j::ops::lrn<TypeParam> op;
+    ResultSet<TypeParam>*  results = op.execute({&x}, {1.0, 1.0, 0.5}, {5});
+    NDArray<TypeParam>* out = results->at(0);
         
     ASSERT_EQ(Status::OK(), results->status());
     ASSERT_TRUE(exp.isSameShape(out));
@@ -1611,9 +1627,9 @@ TEST_F(DeclarableOpsTests4, LrnTest_4) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-TEST_F(DeclarableOpsTests4, LrnTest_5) {
+TYPED_TEST(TypedDeclarableOpsTests4, LrnTest_5) {
 
-    NDArray<double> x('c', {2, 2, 2, 4}, { 
+    NDArray<TypeParam> x('c', {2, 2, 2, 4}, { 
 
                 5.5,0., 0.3, 5.5,
                 1.5,0., 1.3, 6.5,
@@ -1625,7 +1641,7 @@ TEST_F(DeclarableOpsTests4, LrnTest_5) {
                 4.5,1., 0.3, 0.5}
     );
 
-    NDArray<double> eps('c', {2, 2, 2, 4}, {
+    NDArray<TypeParam> eps('c', {2, 2, 2, 4}, {
                 0.70082176, 0.,         0.03822664, 0.70082176,
                 0.21835658, 0.,         0.18924236,  0.9462118,
 
@@ -1640,11 +1656,11 @@ TEST_F(DeclarableOpsTests4, LrnTest_5) {
                 0.94679165, 0.21039814, 0.06311944, 0.10519907}
     );
 
-    NDArray<double> exp('c', {2, 2, 2, 4});
+    NDArray<TypeParam> exp('c', {2, 2, 2, 4});
 
-    nd4j::ops::lrn_bp<double> op;
-    ResultSet<double>*  results = op.execute({&x, &eps}, {1.0, 1.0, 0.5}, {5});
-    NDArray<double>* out = results->at(0);
+    nd4j::ops::lrn_bp<TypeParam> op;
+    ResultSet<TypeParam>*  results = op.execute({&x, &eps}, {1.0, 1.0, 0.5}, {5});
+    NDArray<TypeParam>* out = results->at(0);
         
     ASSERT_EQ(Status::OK(), results->status());
     ASSERT_TRUE(exp.isSameShape(out));
