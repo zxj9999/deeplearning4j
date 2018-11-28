@@ -83,6 +83,14 @@ namespace nd4j {
                     mkldnn::memory::desc* conv_src_md, mkldnn::memory::desc* conv_diff_src_md, mkldnn::memory::desc* conv_weights_md,
                     mkldnn::memory::desc* conv_diff_weights_md, mkldnn::memory::desc* conv_bias_md, mkldnn::memory::desc* conv_dst_md,
                     mkldnn::memory::dims& conv_strides, mkldnn::memory::dims& conv_padding, mkldnn::memory::dims& conv_padding_r);
+
+            static void getMKLDNNMemoryDescConv3d(
+                    int kD, int kH, int kW, int sD, int sH, int sW, int pD, int pH, int pW, int dD, int dH, int dW, bool isSameMode, bool isNCDHW,
+                    int bS, int iC, int iD, int iH, int iW, int oC, int oD, int oH, int oW, const NDArray<T>* src, const NDArray<T>* diff_src,
+                    const NDArray<T>* weights, const NDArray<T>* diff_weights, const NDArray<T>* bias, const NDArray<T>* dst,
+                    mkldnn::memory::desc* conv_src_md, mkldnn::memory::desc* conv_diff_src_md, mkldnn::memory::desc* conv_weights_md,
+                    mkldnn::memory::desc* conv_diff_weights_md, mkldnn::memory::desc* conv_bias_md, mkldnn::memory::desc* conv_dst_md,
+                    mkldnn::memory::dims& conv_strides, mkldnn::memory::dims& conv_padding, mkldnn::memory::dims& conv_padding_r);
 #endif
             static void conv2d(nd4j::graph::Context<T>& block, const std::vector<NDArray<T>*>& inArrs, NDArray<T>* output, const std::vector<int>& intArgs);
 

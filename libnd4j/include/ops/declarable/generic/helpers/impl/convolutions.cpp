@@ -857,6 +857,84 @@ void ConvolutionUtils<T>::getMKLDNNMemoryDescConv2d(
         conv_dst_md->data.layout_desc.blocking.strides[0][3] = dst->stridesOf()[isNCHW ? 3 : 2];
     }
 }
+
+template <typename T>
+void ConvolutionUtils<T>::getMKLDNNMemoryDescConv3d(
+        int kD, int kH, int kW, int sD, int sH, int sW, int pD, int pH, int pW, int dD, int dH, int dW, bool isSameMode, bool isNCDHW,
+        int bS, int iC, int iD, int iH, int iW, int oC, int oD, int oH, int oW, const NDArray<T>* src, const NDArray<T>* diff_src,
+        const NDArray<T>* weights, const NDArray<T>* diff_weights, const NDArray<T>* bias, const NDArray<T>* dst,
+        mkldnn::memory::desc* conv_src_md, mkldnn::memory::desc* conv_diff_src_md, mkldnn::memory::desc* conv_weights_md,
+        mkldnn::memory::desc* conv_diff_weights_md, mkldnn::memory::desc* conv_bias_md, mkldnn::memory::desc* conv_dst_md,
+        mkldnn::memory::dims& conv_strides, mkldnn::memory::dims& conv_padding, mkldnn::memory::dims& conv_padding_r) {
+    mkldnn::memory::dims conv_src_tz = { bS, iC, iD, iH, iW };
+    mkldnn::memory::dims conv_weights_tz = { oC, iC, kD, kH, kW };
+    mkldnn::memory::dims conv_bias_tz = { oC };
+    mkldnn::memory::dims conv_dst_tz = { bS, oC, oD, oH, oW };
+
+    conv_strides = { sD, sH, sW };
+    conv_padding = { pD, pH, pW };
+    conv_padding_r = { (oD - 1) * sD - iD + kD - pD,
+                       (oH - 1) * sH - iH + kH - pH,
+                       (oW - 1) * sW - iW + kW - pW };
+
+    auto type = mkldnn::memory::data_type::f32;
+    auto format = isNCDHW ? mkldnn::memory::format::ncdhw : mkldnn::memory::format::ndhwc;
+    auto formatw = mkldnn::memory::format::dhwio;
+
+    if (src != nullptr && conv_src_md != nullptr) {
+        *conv_src_md = mkldnn::memory::desc({ conv_src_tz }, type, format);
+        conv_src_md->data.format = mkldnn_blocked; // overrides "format = isNCDHW ? ncdhw : ndhwc"
+        conv_src_md->data.layout_desc.blocking.strides[0][0] = src->stridesOf()[isNCDHW ? 0 : 0];
+        conv_src_md->data.layout_desc.blocking.strides[0][1] = src->stridesOf()[isNCDHW ? 1 : 4];
+        conv_src_md->data.layout_desc.blocking.strides[0][2] = src->stridesOf()[isNCDHW ? 2 : 1];
+        conv_src_md->data.layout_desc.blocking.strides[0][3] = src->stridesOf()[isNCDHW ? 3 : 2];
+        conv_src_md->data.layout_desc.blocking.strides[0][4] = src->stridesOf()[isNCDHW ? 4 : 3];
+    }
+
+    if (diff_src != nullptr && conv_diff_src_md != nullptr) {
+        *conv_diff_src_md = mkldnn::memory::desc({ conv_src_tz }, type, format);
+        conv_diff_src_md->data.format = mkldnn_blocked; // overrides "format = isNCDHW ? ncdhw : ndhwc"
+        conv_diff_src_md->data.layout_desc.blocking.strides[0][0] = diff_src->stridesOf()[isNCDHW ? 0 : 0];
+        conv_diff_src_md->data.layout_desc.blocking.strides[0][1] = diff_src->stridesOf()[isNCDHW ? 1 : 4];
+        conv_diff_src_md->data.layout_desc.blocking.strides[0][2] = diff_src->stridesOf()[isNCDHW ? 2 : 1];
+        conv_diff_src_md->data.layout_desc.blocking.strides[0][3] = diff_src->stridesOf()[isNCDHW ? 3 : 2];
+        conv_diff_src_md->data.layout_desc.blocking.strides[0][4] = diff_src->stridesOf()[isNCDHW ? 4 : 3];
+    }
+
+    if (weights != nullptr && conv_weights_md != nullptr) {
+        *conv_weights_md = mkldnn::memory::desc({ conv_weights_tz }, type, formatw);
+        conv_weights_md->data.format = mkldnn_blocked; // overrides "formatw = dhwio"
+        conv_weights_md->data.layout_desc.blocking.strides[0][0] = weights->stridesOf()[4];
+        conv_weights_md->data.layout_desc.blocking.strides[0][1] = weights->stridesOf()[3];
+        conv_weights_md->data.layout_desc.blocking.strides[0][2] = weights->stridesOf()[0];
+        conv_weights_md->data.layout_desc.blocking.strides[0][3] = weights->stridesOf()[1];
+        conv_weights_md->data.layout_desc.blocking.strides[0][4] = weights->stridesOf()[2];
+    }
+
+    if (diff_weights != nullptr && conv_diff_weights_md != nullptr) {
+        *conv_diff_weights_md = mkldnn::memory::desc({ conv_weights_tz }, type, formatw);
+        conv_diff_weights_md->data.format = mkldnn_blocked; // overrides "formatw = dhwio"
+        conv_diff_weights_md->data.layout_desc.blocking.strides[0][0] = diff_weights->stridesOf()[4];
+        conv_diff_weights_md->data.layout_desc.blocking.strides[0][1] = diff_weights->stridesOf()[3];
+        conv_diff_weights_md->data.layout_desc.blocking.strides[0][2] = diff_weights->stridesOf()[0];
+        conv_diff_weights_md->data.layout_desc.blocking.strides[0][3] = diff_weights->stridesOf()[1];
+        conv_diff_weights_md->data.layout_desc.blocking.strides[0][4] = diff_weights->stridesOf()[2];
+    }
+
+    if (bias != nullptr && conv_bias_md != nullptr) {
+        *conv_bias_md = mkldnn::memory::desc({ conv_bias_tz }, type, mkldnn::memory::format::x);
+    }
+
+    if (dst != nullptr && conv_dst_md != nullptr) {
+        *conv_dst_md = mkldnn::memory::desc({ conv_dst_tz }, type, format);
+        conv_dst_md->data.format = mkldnn_blocked; // overrides "format = isNCDHW ? ncdhw : ndhwc"
+        conv_dst_md->data.layout_desc.blocking.strides[0][0] = dst->stridesOf()[isNCDHW ? 0 : 0];
+        conv_dst_md->data.layout_desc.blocking.strides[0][1] = dst->stridesOf()[isNCDHW ? 1 : 4];
+        conv_dst_md->data.layout_desc.blocking.strides[0][2] = dst->stridesOf()[isNCDHW ? 2 : 1];
+        conv_dst_md->data.layout_desc.blocking.strides[0][3] = dst->stridesOf()[isNCDHW ? 3 : 2];
+        conv_dst_md->data.layout_desc.blocking.strides[0][4] = dst->stridesOf()[isNCDHW ? 4 : 3];
+    }
+}
 #endif
 
 //////////////////////////////////////////////////////////////////////////
