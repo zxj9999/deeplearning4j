@@ -120,16 +120,23 @@ namespace nd4j {
                     const NDArray<T>* src, const NDArray<T>* diff_src, const NDArray<T>* dst,
                     mkldnn::memory::desc* pool_src_md, mkldnn::memory::desc* conv_diff_src_md, mkldnn::memory::desc* pool_dst_md, mkldnn::algorithm& algorithm,
                     mkldnn::memory::dims& pool_strides, mkldnn::memory::dims& pool_kernel, mkldnn::memory::dims& pool_padding, mkldnn::memory::dims& pool_padding_r);
+
+            static void getMKLDNNMemoryDescPool3d(
+                    int kD, int kH, int kW, int sD, int sH, int sW, int pD, int pH, int pW, int dD, int dH, int dW, int poolingMode, int extraParam0, bool isNCDHW,
+                    int bS, int iC, int iD, int iH, int iW, int oC, int oD, int oH, int oW,
+                    const NDArray<T>* src, const NDArray<T>* diff_src, const NDArray<T>* dst,
+                    mkldnn::memory::desc* pool_src_md, mkldnn::memory::desc* conv_diff_src_md, mkldnn::memory::desc* pool_dst_md, mkldnn::algorithm& algorithm,
+                    mkldnn::memory::dims& pool_strides, mkldnn::memory::dims& pool_kernel, mkldnn::memory::dims& pool_padding, mkldnn::memory::dims& pool_padding_r);
 #endif
             static void maxPool2d(nd4j::graph::Context<T>& block, NDArray<T>* input, NDArray<T>* output, const std::vector<int>& params, NDArray<T>* indices);
 
-            static void pooling3d(NDArray<T>& input, NDArray<T>& output, const T* extraParams);
+            static void pooling3d(nd4j::graph::Context<T>& block, NDArray<T>& input, NDArray<T>& output, const T* extraParams);
 
             static void pooling2d(nd4j::graph::Context<T>& block, NDArray<T>& input, NDArray<T>& output, const T* extraParams);
 
             static void pooling2dBP(nd4j::graph::Context<T>& block, NDArray<T>& input, NDArray<T>& gradO, NDArray<T>& gradI, const T* extraParams);
 
-            static void pooling3dBP(NDArray<T>& input, NDArray<T>& gradO, NDArray<T>& gradI, const T* extraParams);
+            static void pooling3dBP(nd4j::graph::Context<T>& block, NDArray<T>& input, NDArray<T>& gradO, NDArray<T>& gradI, const T* extraParams);
 
     };
 
