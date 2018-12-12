@@ -88,12 +88,12 @@ public class StandardDeviation extends Variance {
 
     @Override
     public Type getOpType() {
-        return Type.VARIANCE;
+        return Type.SUMMARYSTATS;
     }
 
     @Override
     public Type opType(){
-        return Type.VARIANCE;
+        return Type.SUMMARYSTATS;
     }
 
 
