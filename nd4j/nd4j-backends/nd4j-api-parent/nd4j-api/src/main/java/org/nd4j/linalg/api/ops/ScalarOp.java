@@ -33,4 +33,6 @@ public interface ScalarOp extends BroadcastOp {
 
 
     void setScalar(Number scalar);
+
+    void setScalar(INDArray scalar);
 }
