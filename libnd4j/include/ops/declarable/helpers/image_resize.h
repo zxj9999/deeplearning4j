@@ -26,12 +26,9 @@ namespace nd4j {
 namespace ops {
 namespace helpers {
 
-    template <typename T>
-    int resizeBilinearFunctor(NDArray<T> const* image, int width, int height, bool center, NDArray<T>* output);
-    template <typename T>
-    int resizeNeighborFunctor(NDArray<T> const* image, int width, int height, bool center, NDArray<T>* output);
-    template <typename T>
-    void cropAndResizeFunctor(NDArray<T> const* images, NDArray<T> const* boxes, NDArray<T> const* indices, NDArray<T> const* cropSize, int method, T extrapolationVal, NDArray<T>* crops);
+    int resizeBilinearFunctor(NDArray const* image, int width, int height, bool center, NDArray* output);
+    int resizeNeighborFunctor(NDArray const* image, int width, int height, bool center, NDArray* output);
+    void cropAndResizeFunctor(NDArray const* images, NDArray const* boxes, NDArray const* indices, NDArray const* cropSize, int method, double extrapolationVal, NDArray* crops);
 }
 }
 }

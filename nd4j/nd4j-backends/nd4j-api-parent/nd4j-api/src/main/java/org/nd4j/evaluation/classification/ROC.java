@@ -24,8 +24,9 @@ import org.nd4j.evaluation.curves.RocCurve;
 import org.nd4j.evaluation.serde.ROCSerializer;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.api.ops.Op;
-import org.nd4j.linalg.api.ops.impl.transforms.arithmetic.OldMulOp;
+import org.nd4j.linalg.api.ops.impl.reduce.longer.MatchCondition;
 import org.nd4j.linalg.api.ops.impl.transforms.comparison.CompareAndSet;
+import org.nd4j.linalg.api.ops.impl.transforms.pairwise.arithmetic.OldMulOp;
 import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.indexing.INDArrayIndex;
 import org.nd4j.linalg.indexing.NDArrayIndex;
@@ -213,6 +214,14 @@ public class ROC extends BaseEvaluation<ROC> {
                             + Arrays.toString(labels.shape()) + ", predictions shape = "
                             + Arrays.toString(predictions.shape()) + "; require rank 2 array with size(1) == 1 or 2");
         }
+
+        if(labels.dataType() != predictions.dataType())
+            labels = labels.castTo(predictions.dataType());
+
+        //Check for NaNs in predictions - without this, evaulation could silently be intepreted as class 0 prediction due to argmax
+        long count = Nd4j.getExecutioner().execAndReturn(new MatchCondition(predictions, Conditions.isNan())).getFinalResult().longValue();
+        org.nd4j.base.Preconditions.checkState(count == 0, "Cannot perform evaluation with NaN(s) present:" +
+                " %s NaN(s) present in predictions INDArray", count);
 
         double step = 1.0 / thresholdSteps;
         boolean singleOutput = labels.size(1) == 1;

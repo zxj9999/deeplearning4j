@@ -56,6 +56,7 @@ import org.deeplearning4j.optimize.solvers.accumulation.GradientsAccumulator;
 import org.deeplearning4j.util.CrashReportingUtil;
 import org.deeplearning4j.util.ModelSerializer;
 import org.deeplearning4j.util.NetworkUtils;
+import org.deeplearning4j.util.OutputLayerUtil;
 import org.nd4j.base.Preconditions;
 import org.nd4j.evaluation.IEvaluation;
 import org.nd4j.evaluation.classification.Evaluation;
@@ -306,8 +307,6 @@ public class MultiLayerNetwork implements Serializable, Classifier, Layer, Neura
         if (flattenedGradients == null) {
             initGradientsView();
         }
-        if (!layerWiseConfigurations.isPretrain())
-            return;
 
         for (int i = 0; i < getnLayers(); i++) {
             pretrainLayer(i, iter, numEpochs);
@@ -401,7 +400,6 @@ public class MultiLayerNetwork implements Serializable, Classifier, Layer, Neura
         Layer layer = layers[layerIdx];
         if (!layer.isPretrainLayer())
             return;
-        layer.conf().setPretrain(true);
 
         //Do forward pass to the layer to be pretrained
         INDArray outputOfPrevLayer;
@@ -423,9 +421,6 @@ public class MultiLayerNetwork implements Serializable, Classifier, Layer, Neura
 
             layer.fit(outputOfPrevLayer, workspaceMgr);
         }
-
-        // Turn off pretrain after it is complete
-        layer.conf().setPretrain(false);
     }
 
     @Override
@@ -459,7 +454,7 @@ public class MultiLayerNetwork implements Serializable, Classifier, Layer, Neura
         //Get params for MultiLayerNetwork sub layers.
         int idx = param.indexOf('_');
         if (idx == -1)
-            throw new IllegalStateException("Invalid param key: not have layer separator: \"" + param + "\"");
+            throw new IllegalStateException("Invalid param key: does not have layer separator: \"" + param + "\"");
         int layerIdx = Integer.parseInt(param.substring(0, idx));
         String newKey = param.substring(idx + 1);
 
@@ -1560,54 +1555,52 @@ public class MultiLayerNetwork implements Serializable, Classifier, Layer, Neura
         }
         workspaceMgr.setHelperWorkspacePointers(helperWorkspaces);
 
-        if (layerWiseConfigurations.isBackprop()) {
-            update(TaskUtils.buildTask(iter));
-            if (!iter.hasNext() && iter.resetSupported()) {
-                iter.reset();
-            }
-            long time1 = System.currentTimeMillis();
-            while (iter.hasNext()) {
+        update(TaskUtils.buildTask(iter));
+        if (!iter.hasNext() && iter.resetSupported()) {
+            iter.reset();
+        }
+        long time1 = System.currentTimeMillis();
+        while (iter.hasNext()) {
 
-                DataSet next = iter.next();
-                long time2 = System.currentTimeMillis();
+            DataSet next = iter.next();
+            long time2 = System.currentTimeMillis();
 
-                lastEtlTime.set((time2 - time1));
+            lastEtlTime.set((time2 - time1));
 
-                if (next.getFeatures() == null || next.getLabels() == null)
-                    break;
+            if (next.getFeatures() == null || next.getLabels() == null)
+                break;
 
-                // TODO: basically we want to wrap internals of this loop into workspace
+            // TODO: basically we want to wrap internals of this loop into workspace
 
 
-                boolean hasMaskArrays = next.hasMaskArrays();
+            boolean hasMaskArrays = next.hasMaskArrays();
 
-                if (layerWiseConfigurations.getBackpropType() == BackpropType.TruncatedBPTT) {
-                    doTruncatedBPTT(next.getFeatures(), next.getLabels(), next.getFeaturesMaskArray(),
-                            next.getLabelsMaskArray(), workspaceMgr);
-                } else {
-                    if (hasMaskArrays)
-                        setLayerMaskArrays(next.getFeaturesMaskArray(), next.getLabelsMaskArray());
+            if (layerWiseConfigurations.getBackpropType() == BackpropType.TruncatedBPTT) {
+                doTruncatedBPTT(next.getFeatures(), next.getLabels(), next.getFeaturesMaskArray(),
+                        next.getLabelsMaskArray(), workspaceMgr);
+            } else {
+                if (hasMaskArrays)
+                    setLayerMaskArrays(next.getFeaturesMaskArray(), next.getLabelsMaskArray());
 
-                    setInput(next.getFeatures());
-                    setLabels(next.getLabels());
+                setInput(next.getFeatures());
+                setLabels(next.getLabels());
 
-                    if (solver == null) {
-                        try (MemoryWorkspace wsO = Nd4j.getMemoryManager().scopeOutOfWorkspaces()) {
-                            solver = new Solver.Builder().configure(conf()).listeners(getListeners()).model(this)
-                                    .build();
-                        }
+                if (solver == null) {
+                    try (MemoryWorkspace wsO = Nd4j.getMemoryManager().scopeOutOfWorkspaces()) {
+                        solver = new Solver.Builder().configure(conf()).listeners(getListeners()).model(this)
+                                .build();
                     }
-
-                    //TODO CACHE
-                    solver.optimize(workspaceMgr);
                 }
 
-                if (hasMaskArrays)
-                    clearLayerMaskArrays();
-
-                time1 = System.currentTimeMillis();
-                synchronizeIterEpochCounts();
+                //TODO CACHE
+                solver.optimize(workspaceMgr);
             }
+
+            if (hasMaskArrays)
+                clearLayerMaskArrays();
+
+            time1 = System.currentTimeMillis();
+            synchronizeIterEpochCounts();
         }
 
         if (!trainingListeners.isEmpty()) {
@@ -2156,21 +2149,16 @@ public class MultiLayerNetwork implements Serializable, Classifier, Layer, Neura
         }
         workspaceMgr.setHelperWorkspacePointers(helperWorkspaces);
 
-        if (layerWiseConfigurations.isBackprop()) {
-            if (layerWiseConfigurations.getBackpropType() == BackpropType.TruncatedBPTT) {
-                doTruncatedBPTT(features, labels, featuresMask, labelsMask, workspaceMgr);
-            } else {
-                if (solver == null) {
-                    try (MemoryWorkspace wsO = Nd4j.getMemoryManager().scopeOutOfWorkspaces()) {
-                        solver = new Solver.Builder().configure(conf()).listeners(getListeners()).model(this).build();
-                    }
-                }
-                //TODO CACHE WORKSPACE, IF USED???
-                solver.optimize(workspaceMgr);
-            }
+        if (layerWiseConfigurations.getBackpropType() == BackpropType.TruncatedBPTT) {
+            doTruncatedBPTT(features, labels, featuresMask, labelsMask, workspaceMgr);
         } else {
-            throw new IllegalStateException("Network configuration is set to backprop(false). Use the pretrain" +
-                    " and pretrainLayer methods to perform training for unsupervised layerwise training of neural networks");
+            if (solver == null) {
+                try (MemoryWorkspace wsO = Nd4j.getMemoryManager().scopeOutOfWorkspaces()) {
+                    solver = new Solver.Builder().configure(conf()).listeners(getListeners()).model(this).build();
+                }
+            }
+            //TODO CACHE WORKSPACE, IF USED???
+            solver.optimize(workspaceMgr);
         }
 
         clearLayerMaskArrays();
@@ -3221,6 +3209,10 @@ public class MultiLayerNetwork implements Serializable, Classifier, Layer, Neura
      * @return ROC evaluation on the given dataset
      */
     public <T extends ROC> T evaluateROC(DataSetIterator iterator, int rocThresholdSteps) {
+        Layer outputLayer = getOutputLayer();
+        if(getLayerWiseConfigurations().isValidateOutputLayerConfig()){
+            OutputLayerUtil.validateOutputLayerForClassifierEvaluation(outputLayer.conf().getLayer(), ROC.class);
+        }
         return (T)doEvaluation(iterator, new org.deeplearning4j.eval.ROC(rocThresholdSteps))[0];
     }
 
@@ -3243,6 +3235,10 @@ public class MultiLayerNetwork implements Serializable, Classifier, Layer, Neura
      * @return Multi-class ROC evaluation on the given dataset
      */
     public <T extends ROCMultiClass> T evaluateROCMultiClass(DataSetIterator iterator, int rocThresholdSteps) {
+        Layer outputLayer = getOutputLayer();
+        if(getLayerWiseConfigurations().isValidateOutputLayerConfig()){
+            OutputLayerUtil.validateOutputLayerForClassifierEvaluation(outputLayer.conf().getLayer(), ROCMultiClass.class);
+        }
         return (T)doEvaluation(iterator, new org.deeplearning4j.eval.ROCMultiClass(rocThresholdSteps))[0];
     }
 
@@ -3434,8 +3430,16 @@ public class MultiLayerNetwork implements Serializable, Classifier, Layer, Neura
         if (layers == null || !(getOutputLayer() instanceof IOutputLayer)) {
             throw new IllegalStateException("Cannot evaluate network with no output layer");
         }
-        if (labelsList == null)
-            labelsList = iterator.getLabels();
+        if (labelsList == null) {
+            try {
+                labelsList = iterator.getLabels();
+            } catch (Throwable t){ }    //Ignore, maybe UnsupportedOperationException etc
+        }
+
+        Layer outputLayer = getOutputLayer();
+        if(getLayerWiseConfigurations().isValidateOutputLayerConfig()){
+            OutputLayerUtil.validateOutputLayerForClassifierEvaluation(outputLayer.conf().getLayer(), Evaluation.class);
+        }
 
         Evaluation e = new org.deeplearning4j.eval.Evaluation(labelsList, topN);
         doEvaluation(iterator, e);

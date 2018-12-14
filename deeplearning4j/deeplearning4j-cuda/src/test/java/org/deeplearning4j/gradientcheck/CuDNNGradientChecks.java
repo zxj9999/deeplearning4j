@@ -45,6 +45,7 @@ import org.deeplearning4j.nn.weights.WeightInit;
 import org.junit.Test;
 import org.nd4j.linalg.activations.Activation;
 import org.nd4j.linalg.api.buffer.DataBuffer;
+import org.nd4j.linalg.api.buffer.DataType;
 import org.nd4j.linalg.api.buffer.util.DataTypeUtil;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
@@ -74,7 +75,7 @@ public class CuDNNGradientChecks extends BaseDL4JTest {
     private static final double DEFAULT_MIN_ABS_ERROR = 1e-6;
 
     static {
-        DataTypeUtil.setDTypeForContext(DataBuffer.Type.DOUBLE);
+        DataTypeUtil.setDTypeForContext(DataType.DOUBLE);
     }
 
 
@@ -300,7 +301,7 @@ public class CuDNNGradientChecks extends BaseDL4JTest {
         //Mean and variance vars are not gradient checkable; mean/variance "gradient" is used to implement running mean/variance calc
         //i.e., runningMean = decay * runningMean + (1-decay) * batchMean
         //However, numerical gradient will be 0 as forward pass doesn't depend on this "parameter"
-        Set<String> excludeParams = new HashSet<>(Arrays.asList("1_mean", "1_var"));
+        Set<String> excludeParams = new HashSet<>(Arrays.asList("1_mean", "1_var", "1_log10stdev"));
         boolean gradOK = GradientCheckUtil.checkGradients(mln, DEFAULT_EPS, DEFAULT_MAX_REL_ERROR,
                         DEFAULT_MIN_ABS_ERROR, PRINT_RESULTS, RETURN_ON_FIRST_FAILURE, input, labels, excludeParams);
 
@@ -679,7 +680,7 @@ public class CuDNNGradientChecks extends BaseDL4JTest {
         //Mean and variance vars are not gradient checkable; mean/variance "gradient" is used to implement running mean/variance calc
         //i.e., runningMean = decay * runningMean + (1-decay) * batchMean
         //However, numerical gradient will be 0 as forward pass doesn't depend on this "parameter"
-        Set<String> excludeParams = new HashSet<>(Arrays.asList("1_mean", "1_var"));
+        Set<String> excludeParams = new HashSet<>(Arrays.asList("1_mean", "1_var", "1_log10stdev"));
         boolean gradOK = GradientCheckUtil.checkGradients(net, DEFAULT_EPS, DEFAULT_MAX_REL_ERROR,
                 DEFAULT_MIN_ABS_ERROR, PRINT_RESULTS, RETURN_ON_FIRST_FAILURE, in, labels, excludeParams);
 

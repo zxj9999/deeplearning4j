@@ -507,8 +507,14 @@ public class FineTuneConfiguration {
         WeightInit origWeightInit = null;
 
         if (l != null) {
-            if (dropout != null)
-                l.setIDropout(dropout.orElse(null));
+            //As per NeuralNetConfiguration.configureLayer and LayerValidation.configureBaseLayer: only copy dropout to base layers
+            // this excludes things like subsampling and activation layers
+            if (dropout != null && l instanceof BaseLayer) {
+                IDropout d = dropout.orElse(null);
+                if(d != null)
+                    d = d.clone();  //Clone to avoid shared state between layers
+                l.setIDropout(d);
+            }
             if(constraints != null)
                 l.setConstraints(constraints.orElse(null));
         }
@@ -590,10 +596,6 @@ public class FineTuneConfiguration {
     }
 
     public void applyToMultiLayerConfiguration(MultiLayerConfiguration conf) {
-        if (pretrain != null)
-            conf.setPretrain(pretrain);
-        if (backprop != null)
-            conf.setBackprop(backprop);
         if (backpropType != null)
             conf.setBackpropType(backpropType);
         if (tbpttFwdLength != null)
@@ -603,10 +605,6 @@ public class FineTuneConfiguration {
     }
 
     public void applyToComputationGraphConfiguration(ComputationGraphConfiguration conf) {
-        if (pretrain != null)
-            conf.setPretrain(pretrain);
-        if (backprop != null)
-            conf.setBackprop(backprop);
         if (backpropType != null)
             conf.setBackpropType(backpropType);
         if (tbpttFwdLength != null)

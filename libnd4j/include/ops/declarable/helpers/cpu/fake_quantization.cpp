@@ -47,6 +47,13 @@ namespace helpers {
   float nudged_min = (quant_min_float - nudged_zero_point) * (scale);
   float nudged_max = (quant_max_float - nudged_zero_point) * (scale);
 
+    const auto nudged_scale_repl = inputs.constant(nudged_scale);
+
+    const auto clamped = inputs.cwiseMin(nudged_max).cwiseMax(nudged_min);
+    const auto clamped_shifted = clamped - nudged_min;
+    *output = (clamped_shifted / nudged_scale_repl + 0.5f).floor() *
+                            nudged_scale_repl +
+                        nudged_min;
 
 
     }
