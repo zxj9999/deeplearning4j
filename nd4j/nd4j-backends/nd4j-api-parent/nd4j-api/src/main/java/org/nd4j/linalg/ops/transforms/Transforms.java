@@ -383,7 +383,7 @@ public class Transforms {
 
 
     public static INDArray relu(INDArray in, boolean copy) {
-        return Nd4j.getExecutioner().execAndReturn(new RectifedLinear(((copy ? in.dup() : in))));
+        return Nd4j.getExecutioner().execAndReturn(new RectifiedLinear(((copy ? in.dup() : in))));
     }
 
     public static INDArray relu6(INDArray arr) {
