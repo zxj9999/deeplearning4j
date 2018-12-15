@@ -251,10 +251,14 @@ public class DefaultOpExecutioner implements OpExecutioner {
             return op;
         }
 
-        if (op instanceof ReduceOp || op instanceof IndexAccumulation) {
-            //Overloaded exec(ReduceOp,int...) and exec(IndexAccumulation,int...) should always be called instead of this
-            throw new IllegalStateException(
-                            "exec(Op,int...) should never be invoked for ReduceOp/IndexAccumulation");
+        //Overloaded exec(ReduceOp,int...) and exec(IndexAccumulation,int...) should always be called instead of this
+        //However, this method can be called if user does Op op = (some reduce/index accum op)
+        if (op instanceof ReduceOp) {
+            exec(((ReduceOp)op), dimension);
+            return op;
+        } else if(op instanceof IndexAccumulation){
+            exec(((IndexAccumulation)op), dimension);
+            return op;
         }
         if (op instanceof ScalarOp) {
             //Scalar op along dimension should be same as on the entire NDArray
