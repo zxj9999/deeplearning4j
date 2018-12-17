@@ -1665,7 +1665,7 @@ public abstract class BaseNDArray implements INDArray, Iterable {
     @Override
     public INDArray neg() {
         validateNumericalArray("negatiwe (neg)");
-        return Nd4j.getExecutioner().exec(new Negative(this, .createUninitialized(this.dataType(), this.shape(), this.ordering())))
+        return Nd4j.getExecutioner().exec(new Negative(Nd4j.createUninitialized(this.dataType(), this.shape(), this.ordering())))
                 .z();
     }
 
