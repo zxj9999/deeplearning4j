@@ -133,7 +133,7 @@ public class Variance extends BaseReduceOp {
 
     @Override
     public boolean isPassThrough() {
-        return true;
+        return false;
     }
 
 
