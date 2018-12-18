@@ -2486,7 +2486,7 @@ TEST_F(DeclarableOpsTests10, Image_CropAndResize_4) {
 TEST_F(DeclarableOpsTests10, FakeQuantWithMinMaxVars_Test_1) {
 
     NDArray x = NDArrayFactory::create<float>('c', {2,3}, {-63.80f, -63.75f, -63.70f, -63.5f, 0.0f, 0.1f});
-    NDArray exp = NDArrayFactory::create<float>('c', {2,3},  {-63.75f, -63.75f, -63.75f, -63.5f, 0.0f, 0.0f});
+    NDArray exp = NDArrayFactory::create<float>('c', {2,3},  {-63.75f, -63.75f, -63.75f, -63.251953f, 0.0f, 0.0f});
     NDArray min = NDArrayFactory::create<float>(-63.65f);
     NDArray max = NDArrayFactory::create<float>(0.1f);
 
@@ -2496,11 +2496,33 @@ TEST_F(DeclarableOpsTests10, FakeQuantWithMinMaxVars_Test_1) {
     ASSERT_EQ(ND4J_STATUS_OK, results->status());
 
     auto result = results->at(0);
+    result->printIndexedBuffer("Quantized");
     ASSERT_TRUE(exp.isSameShapeStrict(result));
     ASSERT_TRUE(exp.equalsTo(result));
 
     delete results;
 }
+////////////////////////////////////////////////////////////////////
+TEST_F(DeclarableOpsTests10, FakeQuantWithMinMaxVars_Test_2) {
+
+    NDArray x = NDArrayFactory::create<double>('c', {2,3}, {-63.80, -63.75, -63.4, -63.5, 0.0, 0.1});
+    NDArray exp = NDArrayFactory::create<double>('c', {2,3},  {-63.75, -63.75, -63.251953, -63.251953, 0.0, 0.0});
+    NDArray min = NDArrayFactory::create<double>(-63.65);
+    NDArray max = NDArrayFactory::create<double>(0.1);
+
+    nd4j::ops::fake_quant_with_min_max_vars op;
+    auto results = op.execute({&x, &min, &max}, {}, {});
+
+    ASSERT_EQ(ND4J_STATUS_OK, results->status());
+
+    auto result = results->at(0);
+    result->printIndexedBuffer("Quantized2");
+    ASSERT_TRUE(exp.isSameShapeStrict(result));
+    ASSERT_TRUE(exp.equalsTo(result));
+
+    delete results;
+}
+
 ////////////////////////////////////////////////////////////////////
 TEST_F(DeclarableOpsTests10, batchnorm_new_test1) {
 
