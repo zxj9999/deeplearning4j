@@ -2292,7 +2292,11 @@ void NDArray::applyScalarArr(nd4j::scalar::Ops op, const NDArray* scalar, NDArra
 template <typename T>
 void NDArray::applyScalar(nd4j::scalar::Ops op, const T scalar, NDArray *target, void *extraParams) {
 
-    auto scalarArr = NDArrayFactory::create<T>(this->dataType(), scalar, this->_workspace);
+    DataType type = DataTypeUtils::fromT<T>();
+    if (!Environment::getInstance()->isExperimentalBuild())
+        type = this->dataType();
+
+    auto scalarArr = NDArrayFactory::create<T>(type, scalar, this->_workspace);
     applyScalarArr(op, &scalarArr, target, extraParams);
 }
 
@@ -4028,7 +4032,11 @@ NDArray NDArray::operator+(const T& scalar) const {
     if (isS())
         throw std::runtime_error("NDArray::operator+: you can't use this method on String array!");
 
-    auto tmp = NDArrayFactory::create(this->dataType(), scalar, _workspace);
+    DataType type = DataTypeUtils::fromT<T>();
+    if (!Environment::getInstance()->isExperimentalBuild())
+        type = this->dataType();
+
+    auto tmp = NDArrayFactory::create(type, scalar, _workspace);
     NDArray result(_shapeInfo, DataTypeUtils::pickPairwiseResultType(_dataType, DataTypeUtils::fromT<T>()), false, _workspace);
     NativeOpExcutioner::execScalar(nd4j::scalar::Add, _buffer, _shapeInfo, result._buffer, result._shapeInfo, tmp.buffer(), tmp.shapeInfo(), nullptr);
     return result;
@@ -4051,7 +4059,11 @@ NDArray NDArray::operator-(const T& scalar) const {
     if (isS())
         throw std::runtime_error("NDArray::operator-: you can't use this method on String array!");
 
-    auto tmp = NDArrayFactory::create(scalar);
+    DataType type = DataTypeUtils::fromT<T>();
+    if (!Environment::getInstance()->isExperimentalBuild())
+        type = this->dataType();
+
+    auto tmp = NDArrayFactory::create(type, scalar, _workspace);
     NDArray result(_shapeInfo, DataTypeUtils::pickPairwiseResultType(_dataType, DataTypeUtils::fromT<T>()), false, _workspace);
     NativeOpExcutioner::execScalar(nd4j::scalar::Subtract, _buffer, _shapeInfo, result._buffer, result._shapeInfo, tmp.buffer(), tmp.shapeInfo(), nullptr);
     return result;
@@ -4074,7 +4086,11 @@ NDArray NDArray::operator*(const T& scalar) const {
     if (isS())
         throw std::runtime_error("NDArray::operator*: you can't use this method on String array!");
 
-    auto tmp = NDArrayFactory::create(this->dataType(), scalar, _workspace);
+    DataType type = DataTypeUtils::fromT<T>();
+    if (!Environment::getInstance()->isExperimentalBuild())
+        type = this->dataType();
+
+    auto tmp = NDArrayFactory::create(type, scalar, _workspace);
     NDArray result(_shapeInfo, DataTypeUtils::pickPairwiseResultType(_dataType, DataTypeUtils::fromT<T>()), false, _workspace);
     NativeOpExcutioner::execScalar(nd4j::scalar::Multiply, _buffer, _shapeInfo, result._buffer, result._shapeInfo, tmp.buffer(), tmp.shapeInfo(), nullptr);
     return result;
@@ -4100,7 +4116,11 @@ NDArray NDArray::operator/(const T& scalar) const {
     if(scalar == (T)0.)
         throw std::runtime_error("NDArray::operator/ (division operator) : division by zero !");
 
-    auto tmp = NDArrayFactory::create(this->dataType(), scalar, _workspace);
+    DataType type = DataTypeUtils::fromT<T>();
+    if (!Environment::getInstance()->isExperimentalBuild())
+        type = this->dataType();
+
+    auto tmp = NDArrayFactory::create(type, scalar, _workspace);
     NDArray result(_shapeInfo, DataTypeUtils::pickPairwiseResultType(_dataType, DataTypeUtils::fromT<T>()), false, _workspace);
     NativeOpExcutioner::execScalar(nd4j::scalar::Divide, _buffer, _shapeInfo, result._buffer, result._shapeInfo, tmp.getBuffer(), tmp.getShapeInfo(), nullptr);
     return result;
@@ -4164,7 +4184,12 @@ ND4J_EXPORT NDArray operator-(const float16& scalar, const NDArray & arr) {
     if (arr.isS())
         throw std::runtime_error("NDArray::operator-: you can't use this method on String array!");
 
-    auto tmp = NDArrayFactory::create(scalar, arr.getWorkspace());
+    DataType type = DataTypeUtils::fromT<float16>();
+        if (!Environment::getInstance()->isExperimentalBuild())
+            type = arr.dataType();
+
+    auto tmp = NDArrayFactory::create(type, scalar, arr.getWorkspace());
+
     NDArray result(arr.getShapeInfo(), DataTypeUtils::pickPairwiseResultType(arr.dataType(), DataTypeUtils::fromT<float16>()), false, arr.getWorkspace());
     NativeOpExcutioner::execScalar(nd4j::scalar::ReverseSubtract, arr.getBuffer(), arr.getShapeInfo(), result.getBuffer(), result.getShapeInfo(), tmp.getBuffer(), tmp.getShapeInfo(), nullptr);
     return result;
@@ -4175,7 +4200,11 @@ ND4J_EXPORT NDArray operator-(const bfloat16& scalar, const NDArray & arr) {
     if (arr.isS())
         throw std::runtime_error("NDArray::operator-: you can't use this method on String array!");
 
-    auto tmp = NDArrayFactory::create(scalar, arr.getWorkspace());
+        DataType type = DataTypeUtils::fromT<bfloat16>();
+        if (!Environment::getInstance()->isExperimentalBuild())
+            type = arr.dataType();
+
+        auto tmp = NDArrayFactory::create(type, scalar, arr.getWorkspace());
     NDArray result(arr.getShapeInfo(), DataTypeUtils::pickPairwiseResultType(arr.dataType(), DataTypeUtils::fromT<bfloat16>()), false, arr.getWorkspace());
     NativeOpExcutioner::execScalar(nd4j::scalar::ReverseSubtract, arr.getBuffer(), arr.getShapeInfo(), result.getBuffer(), result.getShapeInfo(), tmp.getBuffer(), tmp.getShapeInfo(), nullptr);
     return result;
@@ -4185,7 +4214,11 @@ ND4J_EXPORT NDArray operator-(const float& scalar, const NDArray& arr) {
     if (arr.isS())
         throw std::runtime_error("NDArray::operator-: you can't use this method on String array!");
 
-    auto tmp = NDArrayFactory::create(arr.dataType(), scalar, arr.getWorkspace());
+    DataType type = DataTypeUtils::fromT<float16>();
+    if (!Environment::getInstance()->isExperimentalBuild())
+        type = arr.dataType();
+
+    auto tmp = NDArrayFactory::create(type, scalar, arr.getWorkspace());
     NDArray result(arr.getShapeInfo(), DataTypeUtils::pickPairwiseResultType(arr.dataType(), DataTypeUtils::fromT<float>()), false, arr.getWorkspace());
     NativeOpExcutioner::execScalar(nd4j::scalar::ReverseSubtract, arr.getBuffer(), arr.getShapeInfo(), result.getBuffer(), result.getShapeInfo(), tmp.getBuffer(), tmp.getShapeInfo(), nullptr);
     return result;
@@ -4408,8 +4441,12 @@ template <typename T>
 void NDArray::operator+=(const T value) {
     if (isS())
         throw std::runtime_error("NDArray::operator+=: you can't use this method on String array!");
+        DataType type = DataTypeUtils::fromT<T>();
 
-    auto tmp = NDArrayFactory::create(value, _workspace);
+    if (!Environment::getInstance()->isExperimentalBuild())
+        type = this->dataType();
+
+    auto tmp = NDArrayFactory::create(type, value, _workspace);
     NativeOpExcutioner::execScalar(nd4j::scalar::Add, this->_buffer, this->_shapeInfo, this->_buffer, this->_shapeInfo, tmp.buffer(), tmp.shapeInfo(), nullptr);
 }
 template void NDArray::operator+=(const double value);
@@ -4424,8 +4461,11 @@ template<typename T>
 void NDArray::operator-=(const T value) {
     if (isS())
         throw std::runtime_error("NDArray::operator-=: you can't use this method on String array!");
+    DataType type = DataTypeUtils::fromT<T>();
+    if (!Environment::getInstance()->isExperimentalBuild())
+        type = this->dataType();
 
-    auto tmp = NDArrayFactory::create(value, _workspace);
+    auto tmp = NDArrayFactory::create(type, value, _workspace);
     NativeOpExcutioner::execScalar(nd4j::scalar::Subtract, this->_buffer, this->_shapeInfo, this->_buffer, this->_shapeInfo, tmp.buffer(), tmp.shapeInfo(), nullptr);
 }
 template void NDArray::operator-=(const double value);
@@ -4441,7 +4481,11 @@ void NDArray::operator*=(const T scalar) {
     if (isS())
         throw std::runtime_error("NDArray::operator*=: you can't use this method on String array!");
 
-    auto tmp = NDArrayFactory::create(this->dataType(), scalar, _workspace);
+    DataType type = DataTypeUtils::fromT<T>();
+    if (!Environment::getInstance()->isExperimentalBuild())
+        type = this->dataType();
+
+    auto tmp = NDArrayFactory::create(type, scalar, _workspace);
     NativeOpExcutioner::execScalar(nd4j::scalar::Multiply, this->_buffer, this->_shapeInfo, this->_buffer, this->_shapeInfo, tmp.getBuffer(), tmp.getShapeInfo(), nullptr);
 }
 template void NDArray::operator*=(const double scalar);
@@ -4460,7 +4504,10 @@ void NDArray::operator/=(const T scalar) {
     if (isS())
         throw std::runtime_error("NDArray::operator/=: you can't use this method on String array!");
 
-    auto tmp = NDArrayFactory::create(this->dataType(), scalar, _workspace);
+    DataType type = DataTypeUtils::fromT<T>();
+    if (!Environment::getInstance()->isExperimentalBuild())
+        type = this->dataType();
+    auto tmp = NDArrayFactory::create(type, scalar, _workspace);
     NativeOpExcutioner::execScalar(nd4j::scalar::Divide, this->_buffer, this->_shapeInfo, this->_buffer, this->_shapeInfo, tmp.getBuffer(), tmp.getShapeInfo(), nullptr);
 }
 template void NDArray::operator/=(const double scalar);

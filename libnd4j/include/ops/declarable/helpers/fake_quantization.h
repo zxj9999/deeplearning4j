@@ -26,7 +26,7 @@ namespace nd4j {
 namespace ops {
 namespace helpers {
 
-    void fakeQuantWithMinMaxVars(NDArray* input, double min, double max, int numBits, bool narrowed, NDArray* output);
+    void fakeQuantWithMinMaxVars(NDArray* input, NDArray* min, NDArray* max, int numBits, bool narrowed, NDArray* output);
 }
 }
 }
